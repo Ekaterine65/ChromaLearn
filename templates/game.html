@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}ChromaLearn — {{ level.title }} · {{ task.emoji }} {{ task.title }}{% endblock %}
+
+{% block extra_head %}
+{# Передаём данные уровня в JS через data-атрибуты #}
+<script>
+  window.GAME_LEVEL    = {{ level.id }};
+  window.SHOW_WCAG     = {{ 'true' if task.show_wcag else 'false' }};
+  window.SHOW_VISION   = {{ 'true' if task.show_vision_sim else 'false' }};
+</script>
+{% endblock %}
+
+{% block palette_bar %}
+<div id="paletteBar">
+  <span class="pb-label">Палитра</span>
+  <div class="pb-sep"></div>
+  <div class="pslot selected" id="ps0" onclick="selectPaletteSlot(0)">
+    <div class="pslot-swatch filled selected" id="ps0s" style="background:#e4eff5"></div>
+    <div class="pslot-role">Фон</div>
+  </div>
+  <div class="pslot" id="ps1" onclick="selectPaletteSlot(1)">
+    <div class="pslot-swatch filled" id="ps1s" style="background:#c5dde8"><div class="del-overlay">✕</div></div>
+    <div class="pslot-role">Поверхн.</div>
+  </div>
+  <div class="pslot" id="ps2" onclick="selectPaletteSlot(2)">
+    <div class="pslot-swatch filled" id="ps2s" style="background:#3d7db8"><div class="del-overlay">✕</div></div>
+    <div class="pslot-role">Акцент</div>
+  </div>
+  <div class="pslot" id="ps3" onclick="selectPaletteSlot(3)">
+    <div class="pslot-swatch" id="ps3s">+</div>
+    <div class="pslot-role">Текст</div>
+  </div>
+  <div class="pslot" id="ps4" onclick="selectPaletteSlot(4)">
+    <div class="pslot-swatch" id="ps4s">+</div>
+    <div class="pslot-role">Доп.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section id="game-screen" class="cl-screen d-flex flex-column" style="height:100vh;overflow:hidden;background:var(--bg)">
+
+  {# ── Game header ── #}
+  <header class="game-header d-flex align-items-center justify-content-between px-3 flex-shrink-0">
+    <div class="game-meta d-flex align-items-center gap-3">
+      <a href="{{ url_for('landing') }}" class="logo text-decoration-none fs-6">Chroma<span>Learn</span></a>
+      <div class="divider"></div>
+      <div class="level-pill"
+           style="background:{{ level.accent_rgba }};color:{{ level.accent_color }}">
+        Уровень {{ level.id }} · {{ level.title }}
+      </div>
+      <div class="task-title d-none d-lg-block">Задание: «{{ task.title }}»</div>
+    </div>
+    <div class="game-actions d-flex gap-2 align-items-center">
+      <div class="progress-track d-none d-md-flex align-items-center gap-2">
+        <span class="small text-muted-cl">Задание 1/3</span>
+        <div class="progress-dots d-flex gap-1">
+          <div class="pdot active"></div><div class="pdot"></div><div class="pdot"></div>
+        </div>
+      </div>
+      <div class="divider d-none d-md-block"></div>
+      <a href="{{ url_for('levels') }}" class="btn-sm text-decoration-none">← Уровни</a>
+      <button class="btn-sm-primary" onclick="showModal('result-modal-{{ level.id }}')">
+        Оценить работу
+      </button>
+      <a href="{{ url_for('profile') }}" class="avatar-btn text-decoration-none" title="Профиль">АИ</a>
+    </div>
+  </header>
+
+  {# 3-column game body #}
+  <div class="game-body flex-grow-1 overflow-hidden"
+       style="display:grid;grid-template-columns:268px 1fr 296px">
+
+    {# LEFT: Task + hints #}
+    <aside class="panel-left">
+
+      <div class="panel-section">
+        <div class="panel-label">Задание</div>
+        <div class="task-card">
+          <div class="task-emotion">{{ task.emoji }} {{ task.title }}</div>
+          <div class="task-desc">{{ task.description }}</div>
+          <div class="task-req mt-3">
+            {% for req in task.requirements %}
+            <div class="req-item d-flex align-items-center gap-2">
+              {% if req.done %}
+              <span class="req-done">✓</span>
+              {% else %}
+              <span class="text-muted-cl">○</span>
+              {% endif %}
+              <span>{{ req.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# Hints lv1 #}
+      {% if task.show_hints %}
+      <div class="panel-section">
+        <div class="panel-label">Подсказки — психология цвета</div>
+        {% for hint in task.hints %}
+        <div class="hint-card">
+          <div class="hint-top d-flex align-items-center gap-2">
+            <div class="hint-swatch" style="background:{{ hint.color }}"></div>
+            <div class="hint-name">{{ hint.name }}</div>
+          </div>
+          <div class="hint-text">{{ hint.text }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {# Locked hints lv2,3 #}
+      {% else %}
+      <div class="panel-section">
+        <div class="panel-label" style="color:rgba(200,180,255,.35)">Подсказки</div>
+        <div class="text-center p-3 rounded-3"
+             style="background:rgba(200,180,255,.04);border:1px dashed rgba(200,180,255,.15)">
+          <div class="fs-4 mb-2">🔒</div>
+          <div class="small text-muted-cl lh-sm">
+            На этом уровне подсказки по психологии цвета недоступны.
+            Доверьтесь интуиции.
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Vision simulator lv3 #}
+      {% if task.show_vision_sim %}
+      <div class="panel-section">
+        <div class="panel-label">Симулятор зрения</div>
+        <div class="d-flex flex-column gap-2">
+          <button class="vision-btn active" onclick="setVisionMode(this,'normal')">👁 Нормальное зрение</button>
+          <button class="vision-btn" onclick="setVisionMode(this,'protanopia')">🔴 Протанопия</button>
+          <button class="vision-btn" onclick="setVisionMode(this,'deuteranopia')">🟢 Дейтеранопия</button>
+          <button class="vision-btn" onclick="setVisionMode(this,'tritanopia')">🔵 Тританопия</button>
+        </div>
+        <div id="visionNote" class="mt-2 small text-muted-cl lh-sm">
+          Выберите тип нарушения зрения для проверки читаемости.
+        </div>
+      </div>
+      {% endif %}
+
+    </aside>
+
+    {# CENTER: Live site preview #}
+    <main class="panel-center" id="panelCenter" style="position:relative">
+    {% if task.show_vision_sim %}
+    <div id="visionFilter" style="position:absolute;inset:0;pointer-events:none;z-index:4;transition:all .3s"></div>
+    {% endif %}
+
+    {# Список доступных файлов #}
+    {% set sites = ['aelius.html', 'shop.html', 'media-blog.html'] %}
+    {% set random_site = sites|random %}
+    
+    {% include 'sites/' + random_site %}
+    </main>
+
+    {# RIGHT: Color wheel + tools #}
+    <aside class="panel-right">
+
+      <div class="panel-section">
+        <div class="panel-label">Редактирование цвета</div>
+        <div class="active-role-box">
+          <div class="arb-swatch" id="arbSwatch" style="background:#e4eff5"></div>
+          <div>
+            <div class="arb-role" id="arbRole">Фон</div>
+            <div class="arb-hex" id="arbHex">#E4EFF5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wheel-wrap">
+        <div class="d-flex gap-2 align-items-center">
+          <div class="wheel-container">
+            <canvas id="colorWheel" width="200" height="200"></canvas>
+            <canvas id="harmonyCanvas" width="200" height="200"></canvas>
+            <div class="wheel-center-info">
+              <div class="wheel-center-circle">
+                <div class="wcc-color" id="centerColor"></div>
+                <div class="wcc-hex" id="centerHex"></div>
+              </div>
+            </div>
+          </div>
+          <div class="brightness-track">
+            <div class="brightness-label">Яркость</div>
+            <div class="brightness-slider-wrap">
+              <input type="range" id="slL" min="0" max="100" value="80"
+                     orient="vertical"
+                     oninput="currentLight=+this.value;updateColorUI()"
+                     class="brightness-slider">
+            </div>
+            <div class="brightness-val" id="brightnessVal">80%</div>
+          </div>
+        </div>
+
+        {# Editable HEX / RGB fields #}
+        <div class="color-fields">
+          <div class="color-field-group color-field-hex">
+            <label class="color-field-label">HEX</label>
+            <input class="color-field-input" id="fHex" type="text"
+                   value="#E4EFF5" maxlength="7"
+                   oninput="applyHexInputValue(this.value)"
+                   onblur="normalizeHexInput()">
+          </div>
+          <div class="color-field-group">
+            <label class="color-field-label">R</label>
+            <input class="color-field-input color-field-short" id="fR"
+                   type="number" min="0" max="255" value="228"
+                   oninput="applyRgbInputValues()">
+          </div>
+          <div class="color-field-group">
+            <label class="color-field-label">G</label>
+            <input class="color-field-input color-field-short" id="fG"
+                   type="number" min="0" max="255" value="239"
+                   oninput="applyRgbInputValues()">
+          </div>
+          <div class="color-field-group">
+            <label class="color-field-label">B</label>
+            <input class="color-field-input color-field-short" id="fB"
+                   type="number" min="0" max="255" value="245"
+                   oninput="applyRgbInputValues()">
+          </div>
+        </div>
+
+        <button class="apply-btn" onclick="applyColorToSlot()">
+          Применить к «<span id="applyRoleLabel">Фон</span>» →
+        </button>
+      </div>
+
+      {# Harmony picker #}
+      {% if level.id == 1 %}
+      <div class="panel-section">
+        <div class="panel-label">Тип гармонии</div>
+        <div class="harmony-picker">
+          <button class="harmony-btn" onclick="setHarmonyMode(this,'analogous')">Аналоговая</button>
+          <button class="harmony-btn" onclick="setHarmonyMode(this,'complementary')">Комплиментарная</button>
+          <button class="harmony-btn" onclick="setHarmonyMode(this,'triadic')">Триадная</button>
+          <button class="harmony-btn active" onclick="setHarmonyMode(this,'monochromatic')">Моно</button>
+        </div>
+      </div>
+
+      {% endif %}
+
+      {# WCAG — уровни 2 и 3 #}
+      {% if task.show_wcag and level.id == 3 %}
+      <div class="panel-section">
+        <div class="panel-label">Контрастность WCAG</div>
+        <div class="wcag-pair">
+          <div class="wcag-row wcag-pass">
+            <div class="wcag-dot wcag-dot-p"></div>
+            <div>
+              <div class="wcag-main">AA · 4.8:1 ✓</div>
+              <div class="wcag-sub">Текст на фоне читаем</div>
+            </div>
+          </div>
+          <div class="wcag-row wcag-fail">
+            <div class="wcag-dot wcag-dot-f"></div>
+            <div>
+              <div class="wcag-main">AAA · не пройден</div>
+              <div class="wcag-sub">Нужно 7:1, сейчас 4.8:1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </aside>
+  </div>{# /game-body #}
+
+</section>
+
+{# SVG colorblind filters #}
+<svg style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="protanopia" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/>
+    </filter>
+    <filter id="deuteranopia" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/>
+    </filter>
+    <filter id="tritanopia" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/>
+    </filter>
+  </defs>
+</svg>
+{% endblock %}
+
+{% block modals %}
+<div class="modal-overlay" id="result-modal-{{ level.id }}" onclick="if (event.target === this) hideModal('result-modal-{{ level.id }}')">
+  <div class="modal">
+    <button type="button" class="modal-close" onclick="hideModal('result-modal-{{ level.id }}')">✕</button>
+
+    <div class="modal-score-circle" style="border-color:{{ modal.score_color }};color:{{ modal.score_color }}">
+      <div class="modal-score-num">{{ modal.score }}</div>
+      <div class="modal-score-label">из 100</div>
+    </div>
+
+    <div class="modal-title">{{ modal.title }}</div>
+    <div class="modal-sub">{{ modal.sub }}</div>
+
+    <div class="modal-breakdown">
+      {% for criterion in modal.criteria %}
+      {% if not ('WCAG' in criterion.label and not task.show_wcag) and not ('Дальтонизм' in criterion.label and not task.show_vision_sim) %}
+      <div class="modal-row">
+        <span class="modal-row-label">{{ criterion.label }}</span>
+        <span class="modal-row-val" style="color:{{ criterion.color }}">{{ criterion.value }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-full btn-full-primary" onclick="hideModal('result-modal-{{ level.id }}')">Доработать палитру</button>
+      <button class="btn-full btn-full-outline" onclick="location.href='{{ url_for('levels') }}'">Завершить уровень →</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Показываем palette bar сразу на игровом экране
+  document.addEventListener('DOMContentLoaded', () => {
+    const bar = document.getElementById('paletteBar');
+    if (bar) bar.classList.add('visible');
+    updatePreviewSite();
+    drawColorWheel();
+    updateColorUI();
+  });
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,29 @@
+﻿{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Вход{% endblock %}
+
+{% block content %}
+<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+  <div class="landing-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grain"></div>
+
+  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:420px;padding:28px">
+    <h1 class="section-title" style="margin-bottom:16px">Вход</h1>
+    <form>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Email</label>
+        <input type="email" class="form-control" placeholder="you@email.com">
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Пароль</label>
+        <input type="password" class="form-control">
+      </div>
+      <button type="submit" class="btn-full btn-full-primary">Войти</button>
+    </form>
+    <div class="small text-muted-cl mt-3">Нет аккаунта? <a href="{{ url_for('register') }}" class="text-decoration-none">Регистрация</a></div>
+  </div>
+</section>
+{% endblock %}

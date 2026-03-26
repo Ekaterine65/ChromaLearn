@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Профиль{% endblock %}
+
+{% block content %}
+<section id="screen-profile" style="background:var(--bg);overflow-y:auto;min-height:100vh">
+
+  {# Header #}
+  <header class="profile-header d-flex align-items-center justify-content-between">
+    <a href="{{ url_for('landing') }}" class="logo text-decoration-none">Chroma<span>Learn</span></a>
+    <div class="d-flex align-items-center gap-3">
+      <a href="javascript:history.back()" class="back-btn text-decoration-none">← Назад</a>
+      <div class="avatar-btn">АИ</div>
+    </div>
+  </header>
+
+  <div class="profile-body mx-auto" style="max-width:1100px;padding:48px 24px 80px">
+
+    {# Hero card #}
+    <div class="profile-hero row align-items-center g-4 mb-5">
+      <div class="col-auto">
+        <div class="profile-avatar">{{ profile.initials }}</div>
+      </div>
+      <div class="col">
+        <div class="profile-name">{{ profile.name }}</div>
+        <div class="profile-meta d-flex flex-wrap align-items-center gap-2 gap-md-3 mt-1">
+          <span>{{ profile.email }}</span>
+          <span class="profile-meta-dot d-none d-sm-inline-block"></span>
+          <span>В системе с {{ profile.since }}</span>
+          <span class="profile-meta-dot d-none d-sm-inline-block"></span>
+          <span>{{ profile.city }}</span>
+        </div>
+        <div class="mt-3">
+          <span class="profile-level-badge">{{ profile.level_badge }}</span>
+        </div>
+      </div>
+      <div class="col-auto">
+        <a href="{{ url_for('profile_edit') }}" class="back-btn text-decoration-none">Редактировать</a>
+      </div>
+    </div>
+
+    {# Stats grid #}
+    <div class="mb-5">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="section-title mb-0">Статистика</h2>
+      </div>
+      <div class="row row-cols-2 row-cols-md-4 g-3">
+        {% for stat in profile.stats %}
+        <div class="col">
+          <div class="stat-card h-100 stat-card-center">
+            <span class="stat-card-icon">{{ stat.icon }}</span>
+            <div class="stat-card-val" style="color:{{ stat.trend_color }}">{{ stat.value }}</div>
+            <div class="stat-card-label">{{ stat.label }}</div>
+            <div class="stat-card-trend" style="color:{{ stat.trend_color }}">{{ stat.trend }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Activity calendar #}
+    <div class="mb-5">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="section-title mb-0">Активность</h2>
+        <div class="d-flex align-items-center gap-2" id="yearSwitcher">
+          <select id="yearSelect" class="year-btn" onchange="setCalendarYear(parseInt(this.value))">
+            <option value="2024">2024</option>
+            <option value="2025" selected>2025</option>
+          </select>
+        </div>
+      </div>
+      <div class="calendar-wrap">
+        <div id="calTotal" class="small mb-3" style="color:var(--muted)">— заданий выполнено</div>
+        <div class="d-flex gap-3 align-items-start">
+          <div class="cal-days-col">
+            <div class="cal-day-label"></div>
+            <div class="cal-day-label">Пн</div>
+            <div class="cal-day-label"></div>
+            <div class="cal-day-label">Ср</div>
+            <div class="cal-day-label"></div>
+            <div class="cal-day-label">Пт</div>
+            <div class="cal-day-label"></div>
+          </div>
+          <div style="flex:1;overflow-x:auto">
+            <div class="cal-months" id="calMonths"></div>
+            <div class="cal-weeks" id="calWeeks"></div>
+          </div>
+        </div>
+        <div class="cal-legend d-flex align-items-center justify-content-end gap-2 mt-3">
+          <span class="small" style="color:var(--muted)">Меньше</span>
+          <div class="cal-legend-cell" style="background:rgba(255,255,255,.05)"></div>
+          <div class="cal-legend-cell l1"></div>
+          <div class="cal-legend-cell l2"></div>
+          <div class="cal-legend-cell l3"></div>
+          <div class="cal-legend-cell l4"></div>
+          <span class="small" style="color:var(--muted)">Больше</span>
+        </div>
+      </div>
+    </div>
+
+    {# Completed tasks #}
+    <div class="mb-5">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="section-title mb-0">Выполненные задания</h2>
+        <a href="{{ url_for('levels') }}" class="btn-sm text-decoration-none">+ Новое задание</a>
+      </div>
+      <div id="tasksList" class="tasks-list"></div>
+      <div id="tasksPagination" class="pagination"></div>
+    </div>
+
+    {# Skills progress #}
+    <div>
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="section-title mb-0">Прогресс по навыкам</h2>
+      </div>
+      <div class="row row-cols-1 row-cols-md-2 g-3">
+        {% for skill in profile.skills %}
+        <div class="col">
+          <div class="stat-card" style="gap:14px">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold mb-1">{{ skill.icon }} {{ skill.name }}</div>
+                <div class="small" style="color:var(--muted)">{{ skill.note }}</div>
+              </div>
+              <div class="stat-card-val" style="color:{{ skill.color }}">{{ skill.value }}%</div>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:{{ skill.value }}%;background:linear-gradient(90deg,{{ skill.gradient }});border-radius:6px;transition:width .8s ease"></div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>{# /profile-body #}
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Передаём задания из Python в JS
+  window.ALL_TASKS = {{ profile.completed_tasks | tojson }};
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initCalendar();
+    renderTaskPage(1);
+  });
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

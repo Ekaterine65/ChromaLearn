@@ -1,0 +1,69 @@
+{% extends "base_admin.html" %}
+
+{% block title %}ChromaLearn · Задания{% endblock %}
+{% block page_title %}Задания{% endblock %}
+{% block page_meta %}Статистика по всем заданиям и уровням{% endblock %}
+
+{% block content %}
+
+{# KPI #}
+<div class="kpi-row">
+  {% for kpi in tasks_stats.kpis %}
+  <div class="kpi-card c-{{ kpi.color }}">
+    <div class="kpi-label">{{ kpi.label }}</div>
+    <div class="kpi-val c-{{ kpi.color }}">{{ kpi.value }}</div>
+    <div class="kpi-trend {{ 'trend-up' if kpi.up else 'trend-down' }}">
+      {{ '↑' if kpi.up else '↓' }} {{ kpi.trend }}
+    </div>
+    <div class="kpi-spark" data-spark="{{ kpi.spark_data | join(',') }}" data-color="{{ kpi.spark_color }}"></div>
+  </div>
+  {% endfor %}
+</div>
+
+{# Charts row #}
+<div class="admin-grid-2">
+  <div class="card">
+    <div class="card-title">
+      Успешность по уровням
+      <span class="card-title-muted">% заданий с первой попытки</span>
+    </div>
+    <div style="height:130px">
+      <canvas id="lvSuccessChart" style="width:100%;height:130px"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      Распределение результатов
+      <span class="card-title-muted">число пользователей по диапазону баллов</span>
+    </div>
+    <div style="height:130px">
+      <canvas id="resultsChart" style="width:100%;height:130px"></canvas>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.kpi-spark[data-spark]').forEach(el => {
+    el.innerHTML = adminSparkline(el.dataset.spark.split(',').map(Number), el.dataset.color);
+  });
+
+  document.querySelectorAll('.row-spark[data-vals]').forEach(el => {
+    el.innerHTML = adminSparkline(el.dataset.vals.split(',').map(Number), el.dataset.color, 22);
+  });
+
+  drawAdminBarChart('lvSuccessChart', ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'], [
+    { data: adminGen7(87,8,50),  color: 'rgba(107,255,204,.7)' },
+    { data: adminGen7(72,10,51), color: 'rgba(200,180,255,.7)' },
+    { data: adminGen7(54,12,52), color: 'rgba(255,159,107,.7)' },
+  ]);
+
+  drawAdminBarChart('resultsChart', ['<40','40–55','55–70','70–80','80–90','90+'], [
+    { data: [45,98,187,324,412,181], color: 'rgba(200,180,255,.7)' }
+  ]);
+});
+</script>
+{% endblock %}

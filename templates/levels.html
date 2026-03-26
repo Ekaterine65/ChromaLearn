@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Выберите уровень{% endblock %}
+
+{% block content %}
+<section id="screen-levels" class="cl-screen d-flex flex-column" style="min-height:100vh;background:var(--bg)">
+
+  {# Header #}
+  <header class="level-header d-flex align-items-center justify-content-between px-3 px-md-5 py-4 border-bottom border-cl">
+    <a href="{{ url_for('landing') }}" class="logo text-decoration-none">
+      Chroma<span>Learn</span>
+    </a>
+    <div class="d-flex align-items-center gap-3">
+      <a href="{{ url_for('landing') }}" class="back-btn text-decoration-none">← Главная</a>
+      <a href="{{ url_for('profile') }}" class="avatar-btn text-decoration-none" title="Профиль">АИ</a>
+    </div>
+  </header>
+
+  {# Body #}
+  <div class="level-body flex-grow-1 d-flex flex-column align-items-center justify-content-center py-5 px-3 gap-4">
+
+    <div class="level-title-block text-center">
+      <h2 class="fs-1 fw-bold mb-2">Выберите уровень</h2>
+      <p class="text-muted-cl fs-6">Каждый уровень добавляет новое требование и убирает подсказки</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center w-100" style="max-width:1000px">
+      {% for level in levels %}
+      <div class="col d-flex">
+        <a href="{{ url_for('game', level_id=level.id) }}"
+           class="level-card lv{{ level.id }} w-100 text-decoration-none d-flex flex-column gap-4 p-4">
+
+          <div class="lv-glow"></div>
+
+          <div class="lv-badge">{{ level.badge_emoji }} Уровень {{ level.id }}</div>
+
+          <div>
+            <div class="lv-title">{{ level.title }}</div>
+            <div class="text-muted-cl mt-1 small">{{ level.subtitle }}</div>
+          </div>
+
+          <div class="lv-desc">{{ level.description }}</div>
+
+          <div class="lv-tools d-flex flex-wrap gap-2">
+            {% for tool in level.tools %}
+            <span class="tool-tag">{{ tool }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="lv-cta d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-cl">
+            <span>Начать задание</span>
+            <span>→</span>
+          </div>
+
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

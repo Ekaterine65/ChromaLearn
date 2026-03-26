@@ -1,0 +1,50 @@
+﻿{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Редактирование профиля{% endblock %}
+
+{% block content %}
+<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+  <div class="landing-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grain"></div>
+
+  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:520px;padding:28px">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="section-title mb-0">Редактирование профиля</h1>
+      <a href="{{ url_for('profile') }}" class="btn-sm text-decoration-none">← Назад</a>
+    </div>
+
+    <form>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Имя</label>
+        <input type="text" class="form-control" value="{{ profile.name }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Email</label>
+        <input type="email" class="form-control" value="{{ profile.email }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Город</label>
+        <input type="text" class="form-control" value="{{ profile.city }}">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Старый пароль</label>
+        <input type="password" class="form-control" >
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Новый пароль</label>
+        <input type="password" class="form-control" >
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Подтвердить пароль</label>
+        <input type="password" class="form-control" >
+      </div>
+
+      <button type="submit" class="btn-full btn-full-primary">Сохранить</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

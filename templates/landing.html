@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Учись подбирать цвет правильно{% endblock %}
+
+{% block content %}
+<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+
+  <div class="landing-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grain"></div>
+
+  {# Профиль#}
+  <a href="{{ url_for('profile') }}" class="avatar-btn position-fixed top-0 end-0 m-3" style="z-index:200" title="Профиль">
+    АИ
+  </a>
+
+  <div class="landing-content position-relative z-1 d-flex flex-column align-items-center text-center px-3 gap-4" style="max-width:760px">
+
+    <div class="badge-custom">
+      <span class="badge-dot"></span>
+      Интерактивная обучающая система
+    </div>
+
+    <h1 class="landing-title">
+      Научись подбирать<br>
+      <span>цвет правильно</span>
+    </h1>
+
+    <p class="landing-sub">
+      Практические задания по цветовой гармонии, эмоциональному воздействию
+      и доступности интерфейсов. Три уровня — от новичка до эксперта.
+    </p>
+
+    <div class="landing-cta d-flex gap-3 flex-wrap justify-content-center">
+      <a href="{{ url_for('levels') }}" class="cl-btn-primary">Начать обучение →</a>
+    </div>
+
+    <div class="landing-stats d-flex gap-4 gap-md-5 mt-2">
+      <div class="stat-item d-flex flex-column align-items-center gap-1">
+        <span class="stat-num">3</span>
+        <span class="stat-label">Уровня</span>
+      </div>
+      <div class="stat-item d-flex flex-column align-items-center gap-1">
+        <span class="stat-num">12+</span>
+        <span class="stat-label">Заданий</span>
+      </div>
+      <div class="stat-item d-flex flex-column align-items-center gap-1">
+        <span class="stat-num">WCAG</span>
+        <span class="stat-label">Стандарт</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
