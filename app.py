@@ -1,7 +1,16 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template
+from flask_migrate import Migrate
+from sqlalchemy.exc import SQLAlchemyError
+from flask_login import current_user
 
 app = Flask(__name__)
 
+app.config.from_pyfile('config.py')
+ 
+db.init_app(app)
+migrate = Migrate(app, db)
+ 
+init_login_manager(app)
 
 # ── Mock data (заменить на БД в реальном приложении) ──────────────────────────
 
@@ -446,10 +455,23 @@ def _alerts_data():
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.errorhandler(SQLAlchemyError)
+def handle_sqlalchemy_error(err):
+    error_msg = ('Возникла ошибка при подключении к базе данных. '
+                 'Повторите попытку позже.')
+    return f'{error_msg} (Подробнее: {err})', 500
+ 
+ 
+@app.context_processor
+def inject_user():
+    return dict(user=current_user)
+
 @app.route("/")
 def landing():
     return render_template("landing.html")
 
+
+app.register_blueprint(auth_bp)
 
 @app.route("/levels")
 def levels():
