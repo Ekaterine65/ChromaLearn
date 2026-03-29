@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, login_user, logout_user, login_required
 from models import db, User
-from tools import RegistrationForm
+from tools import LoginForm, RegistrationForm
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -21,25 +21,24 @@ def load_user(user_id):
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        login = request.form.get('login')
-        password = request.form.get('password')
-        if login and password:
-            user = db.session.execute(db.select(User).filter_by(login=login)).scalar()
-            if user and user.check_password(password):
-                login_user(user)
-                flash('Вы успешно вошли в систему.', 'success')
-                next_page = request.args.get('next')
-                return redirect(next_page or url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = db.session.execute(db.select(User).filter_by(login=form.login.data)).scalar()
+        if user and user.check_password(form.password.data):
+            login_user(user)
+            flash('Вы успешно вошли в систему.', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('landing'))
         flash('Неверный логин или пароль.', 'danger')
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 
 @bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    flash('Вы успешно вышли из системы.', 'success')
+    return redirect(url_for('landing'))
 
 
 @bp.route('/register', methods=['GET', 'POST'])
@@ -56,8 +55,5 @@ def register():
         db.session.commit()
         flash('Аккаунт создан успешно!', 'success')
         login_user(user)
-        return redirect(url_for('index'))
-    else:
-        if request.method == 'POST':
-            flash('Исправьте ошибки в форме.', 'danger')
+        return redirect(url_for('landing'))
     return render_template('auth/register.html', form=form)

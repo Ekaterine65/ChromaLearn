@@ -2,6 +2,15 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, validators
 
 
+class LoginForm(FlaskForm):
+    login = StringField('Логин', [
+        validators.DataRequired(message='Поле обязательно для заполнения'),
+    ])
+    password = PasswordField('Пароль', [
+        validators.DataRequired(message='Поле обязательно для заполнения'),
+    ])
+
+
 class RegistrationForm(FlaskForm):
     login = StringField('Логин', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
@@ -17,11 +26,11 @@ class RegistrationForm(FlaskForm):
     ])
     password = PasswordField('Пароль', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
-        validators.EqualTo('confirm_password', message='Пароли должны совпадать'),
         validators.Length(min=6, message='Пароль должен быть не короче 6 символов'),
     ])
     confirm_password = PasswordField('Подтвердите пароль', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
+        validators.EqualTo('password', message='Пароли должны совпадать'),
     ])
 
 

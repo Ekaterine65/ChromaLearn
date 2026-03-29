@@ -22,6 +22,9 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
+class UserRole(enum.Enum):
+    user  = "user"
+    admin = "admin"
 
 class HarmonyType(enum.Enum):
     analogous     = "analogous"
@@ -36,10 +39,10 @@ class User(Base, UserMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     login: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(200))
-    role: Mapped[str] = mapped_column(String(20), default="user")
+    role: Mapped[UserRole] = mapped_column(sa.Enum(UserRole), default=UserRole.user)
     first_name: Mapped[str] = mapped_column(String(100))
     second_name: Mapped[str] = mapped_column(String(100))
-    email: Mapped[Optional[str]] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(200), unique=True)
     city: Mapped[Optional[str]] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
@@ -57,7 +60,7 @@ class User(Base, UserMixin):
 
     @property
     def is_admin(self) -> bool:
-        return self.role == "admin"
+        return self.role == UserRole.admin
 
     def __repr__(self) -> str:
         return f"<User {self.login!r}>"

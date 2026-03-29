@@ -1,0 +1,70 @@
+﻿{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Вход{% endblock %}
+
+{% block content %}
+<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+  <div class="landing-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grain"></div>
+
+  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:420px;padding:28px">
+    <h1 class="section-title" style="margin-bottom:16px">Вход</h1>
+
+    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
+          Логин <span class="text-danger">*</span>
+        </label>
+        {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Введите логин") }}
+        <div class="invalid-feedback">
+          {% for error in form.login.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
+          Пароль <span class="text-danger">*</span>
+        </label>
+        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Введите пароль") }}
+        <div class="invalid-feedback">
+          {% for error in form.password.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn-full btn-full-primary">Войти</button>
+    </form>
+
+    <div class="small text-muted-cl mt-3">
+      Нет аккаунта? <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Регистрация</a>
+    </div>
+  </div>
+</section>
+
+<script>
+const rules = {
+  login:    v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
+  password: v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
+};
+
+Object.keys(rules).forEach(name => {
+  const field = document.querySelector(`[name="${name}"]`);
+  if (!field) return;
+  const feedback = field.nextElementSibling;
+  field.addEventListener('blur', () => {
+    const error = rules[name](field.value.trim());
+    if (error) {
+      field.classList.add('is-invalid');
+      feedback.textContent = error;
+    } else {
+      field.classList.remove('is-invalid');
+      feedback.textContent = '';
+    }
+  });
+});
+</script>
+{% endblock %}

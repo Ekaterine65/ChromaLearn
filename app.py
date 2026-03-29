@@ -2,6 +2,8 @@ from flask import Flask, render_template
 from flask_migrate import Migrate
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import current_user
+from models import db 
+from auth import bp as auth_bp, init_login_manager
 
 app = Flask(__name__)
 
@@ -494,16 +496,6 @@ def profile():
 @app.route("/profile/edit")
 def profile_edit():
     return render_template("profile_edit.html", profile=PROFILE)
-
-@app.route("/login")
-def login():
-    return render_template("login.html")
-
-
-@app.route("/register")
-def register():
-    return render_template("register.html")
-
 
 # ── Admin routes ─────────────────────────────────────────
 

@@ -1,0 +1,107 @@
+﻿{% extends "base.html" %}
+
+{% block title %}ChromaLearn — Регистрация{% endblock %}
+
+{% block content %}
+<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+  <div class="landing-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grain"></div>
+
+  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:460px;padding:28px">
+    <h1 class="section-title" style="margin-bottom:16px">Регистрация</h1>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="row mb-3">
+        <div class="col">
+          <label class="form-label text-muted-cl">
+            Имя <span class="text-danger">*</span>
+          </label>
+          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Иван") }}
+          <div class="invalid-feedback">
+            {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+          </div>
+        </div>
+        <div class="col">
+          <label class="form-label text-muted-cl">
+            Фамилия <span class="text-danger">*</span>
+          </label>
+          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), placeholder="Иванов") }}
+          <div class="invalid-feedback">
+            {% for error in form.second_name.errors %}{{ error }}{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
+          Логин <span class="text-danger">*</span>
+        </label>
+        {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Придумайте логин") }}
+        <div class="invalid-feedback">
+          {% for error in form.login.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
+          Пароль <span class="text-danger">*</span>
+        </label>
+        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Минимум 6 символов") }}
+        <div class="invalid-feedback">
+          {% for error in form.password.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
+          Подтвердите пароль <span class="text-danger">*</span>
+        </label>
+        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Повторите пароль") }}
+        <div class="invalid-feedback">
+          {% for error in form.confirm_password.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn-full btn-full-primary">Создать аккаунт</button>
+    </form>
+
+    <div class="small text-muted-cl mt-3">
+      Уже есть аккаунт? <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Войти</a>
+    </div>
+  </div>
+</section>
+
+<script>
+const rules = {
+  first_name:       v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
+  second_name:      v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
+  login:            v => v.length < 4 ? 'Логин должен быть от 4 до 25 символов' : '',
+  password:         v => v.length < 6 ? 'Пароль должен быть не короче 6 символов' : '',
+  confirm_password: v => {
+    const pwd = document.querySelector('[name="password"]').value;
+    return v !== pwd ? 'Пароли должны совпадать' : '';
+  },
+};
+
+Object.keys(rules).forEach(name => {
+  const field = document.querySelector(`[name="${name}"]`);
+  if (!field) return;
+  const feedback = field.nextElementSibling;
+  field.addEventListener('blur', () => {
+    const error = rules[name](field.value.trim());
+    if (error) {
+      field.classList.add('is-invalid');
+      feedback.textContent = error;
+    } else {
+      field.classList.remove('is-invalid');
+      feedback.textContent = '';
+    }
+  });
+});
+</script>
+{% endblock %}

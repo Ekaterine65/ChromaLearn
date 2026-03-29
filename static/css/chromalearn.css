@@ -16,6 +16,24 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
 h1,h2,h3 { font-family:'Syne',sans-serif; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
+.text-danger {
+    color: var(--danger) !important;
+}
+
+.invalid-feedback {
+    color: var(--danger);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger);
+    box-shadow: none; 
+}
+
+.form-control.is-invalid:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(255, 107, 138, 0.15);
+}
+
 /* landing */
 #screen-landing { position:relative; align-items:center; justify-content:center; overflow:hidden; }
 .landing-bg { position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(130,90,255,.18) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(255,130,80,.12) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 10% 70%,rgba(80,220,180,.10) 0%,transparent 60%),var(--bg); }
@@ -765,3 +783,44 @@ body {
 .skill-name{color:var(--text)}
 .skill-val{color:var(--text)}
 .skill-median{color:var(--muted)}
+
+.toast {
+  min-width: 280px;
+  background: var(--surface2);
+  color: var(--text);
+  border-left: 4px solid transparent !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast.toast-success {
+  border-left: 4px solid var(--success) !important;
+  box-shadow: 0 0 20px rgba(107, 255, 203, 0.381),
+              0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast.toast-danger {
+  border-left: 4px solid var(--danger) !important;
+  box-shadow: 0 0 20px rgba(255, 107, 139, 0.347),
+              0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+  background: rgba(107, 255, 203, 0.273);
+  color: var(--success);
+}
+
+.toast-danger .toast-icon {
+  background: rgba(255, 107, 139, 0.293);
+  color: var(--danger);
+}
