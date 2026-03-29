@@ -64,7 +64,13 @@
       <button class="btn-sm-primary" onclick="showModal('result-modal-{{ level.id }}')">
         Оценить работу
       </button>
-      <a href="{{ url_for('profile') }}" class="avatar-btn text-decoration-none" title="Профиль">АИ</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('profile') }}" class="avatar-btn text-decoration-none" title="Профиль">
+        {{ current_user.first_name[0] }}{{ current_user.second_name[0] }}
+      </a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn-sm-primary text-decoration-none">Войти</a>
+      {% endif %}
     </div>
   </header>
 
