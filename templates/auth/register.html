@@ -21,7 +21,7 @@
           <label class="form-label text-muted-cl">
             Имя <span class="text-danger">*</span>
           </label>
-          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Иван") }}
+          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Иван", autocomplete="given-name") }}
           <div class="invalid-feedback">
             {% for error in form.first_name.errors %}{{ error }}{% endfor %}
           </div>
@@ -30,7 +30,7 @@
           <label class="form-label text-muted-cl">
             Фамилия <span class="text-danger">*</span>
           </label>
-          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), placeholder="Иванов") }}
+          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), placeholder="Иванов", autocomplete="family-name") }}
           <div class="invalid-feedback">
             {% for error in form.second_name.errors %}{{ error }}{% endfor %}
           </div>
@@ -41,7 +41,7 @@
         <label class="form-label text-muted-cl">
           Логин <span class="text-danger">*</span>
         </label>
-        {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Придумайте логин") }}
+        {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Придумайте логин", autocomplete="username") }}
         <div class="invalid-feedback">
           {% for error in form.login.errors %}{{ error }}{% endfor %}
         </div>
@@ -49,9 +49,27 @@
 
       <div class="mb-3">
         <label class="form-label text-muted-cl">
+          Email <span class="text-danger">*</span>
+        </label>
+        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@email.com", autocomplete="email") }}
+        <div class="invalid-feedback">
+          {% for error in form.email.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Город</label>
+        {{ form.city(class="form-control" + (" is-invalid" if form.city.errors else ""), placeholder="Москва", autocomplete="address-level2") }}
+        <div class="invalid-feedback">
+          {% for error in form.city.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">
           Пароль <span class="text-danger">*</span>
         </label>
-        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Минимум 6 символов") }}
+        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Минимум 6 символов", autocomplete="new-password") }}
         <div class="invalid-feedback">
           {% for error in form.password.errors %}{{ error }}{% endfor %}
         </div>
@@ -61,7 +79,7 @@
         <label class="form-label text-muted-cl">
           Подтвердите пароль <span class="text-danger">*</span>
         </label>
-        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Повторите пароль") }}
+        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Повторите пароль", autocomplete="new-password") }}
         <div class="invalid-feedback">
           {% for error in form.confirm_password.errors %}{{ error }}{% endfor %}
         </div>
@@ -81,6 +99,10 @@ const rules = {
   first_name:       v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
   second_name:      v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
   login:            v => v.length < 4 ? 'Логин должен быть от 4 до 25 символов' : '',
+  email:            v => {
+    if (v.length < 1) return 'Поле обязательно для заполнения';
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Введите корректный email';
+  },
   password:         v => v.length < 6 ? 'Пароль должен быть не короче 6 символов' : '',
   confirm_password: v => {
     const pwd = document.querySelector('[name="password"]').value;

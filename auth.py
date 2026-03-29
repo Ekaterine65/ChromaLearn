@@ -45,15 +45,35 @@ def logout():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
+        # Проверяем что логин не занят
+        if db.session.execute(db.select(User).filter_by(login=form.login.data)).scalar():
+            form.login.errors.append('Этот логин уже занят.')
+            return render_template('auth/register.html', form=form)
+
+        # Проверяем что email не занят
+        if db.session.execute(db.select(User).filter_by(email=form.email.data)).scalar():
+            form.email.errors.append('Этот email уже используется.')
+            return render_template('auth/register.html', form=form)
+
         user = User(
             login=form.login.data,
             first_name=form.first_name.data,
             second_name=form.second_name.data,
+            email=form.email.data,
+            city=form.city.data or None,
         )
         user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Ошибка при создании аккаунта. Попробуйте ещё раз.', 'danger')
+            return render_template('auth/register.html', form=form)
+
         flash('Аккаунт создан успешно!', 'success')
         login_user(user)
         return redirect(url_for('landing'))
+
     return render_template('auth/register.html', form=form)

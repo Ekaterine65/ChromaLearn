@@ -24,6 +24,15 @@ class RegistrationForm(FlaskForm):
         validators.DataRequired(message='Поле обязательно для заполнения'),
         validators.Length(min=1, max=100, message='Фамилия должна быть не длиннее 100 символов'),
     ])
+    email = StringField('Email', [
+        validators.DataRequired(message='Поле обязательно для заполнения'),
+        validators.Email(message='Введите корректный email'),
+        validators.Length(max=200),
+    ])
+    city = StringField('Город', [
+        validators.Optional(),
+        validators.Length(max=100, message='Название города должно быть не длиннее 100 символов'),
+    ])
     password = PasswordField('Пароль', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
         validators.Length(min=6, message='Пароль должен быть не короче 6 символов'),
@@ -32,7 +41,7 @@ class RegistrationForm(FlaskForm):
         validators.DataRequired(message='Поле обязательно для заполнения'),
         validators.EqualTo('password', message='Пароли должны совпадать'),
     ])
-
+ 
 
 class EditProfileForm(FlaskForm):
     login = StringField('Логин', [
