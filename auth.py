@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User
 from tools import LoginForm, RegistrationForm
 
@@ -28,6 +28,8 @@ def login():
             login_user(user)
             flash('Вы успешно вошли в систему.', 'success')
             next_page = request.args.get('next')
+            if current_user.is_admin:
+                return redirect(url_for('admin.overview'))
             return redirect(next_page or url_for('landing'))
         flash('Неверный логин или пароль.', 'danger')
     return render_template('auth/login.html', form=form)

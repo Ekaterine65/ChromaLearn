@@ -18,7 +18,13 @@
     {# Hero card #}
     <div class="profile-hero row align-items-center g-4 mb-5">
       <div class="col-auto">
-        <div class="profile-avatar">{{ profile.initials }}</div>
+        <div class="profile-avatar">
+          {% if current_user.is_authenticated %}
+            {{ current_user.first_name[0] }}{{ current_user.second_name[0] }}
+          {% else %}
+            {{ profile.name[:2] }}
+          {% endif %}
+        </div>
       </div>
       <div class="col">
         <div class="profile-name">{{ profile.name }}</div>
@@ -44,16 +50,38 @@
         <h2 class="section-title mb-0">Статистика</h2>
       </div>
       <div class="row row-cols-2 row-cols-md-4 g-3">
-        {% for stat in profile.stats %}
         <div class="col">
           <div class="stat-card h-100 stat-card-center">
-            <span class="stat-card-icon">{{ stat.icon }}</span>
-            <div class="stat-card-val" style="color:{{ stat.trend_color }}">{{ stat.value }}</div>
-            <div class="stat-card-label">{{ stat.label }}</div>
-            <div class="stat-card-trend" style="color:{{ stat.trend_color }}">{{ stat.trend }}</div>
+            <span class="stat-card-icon">✅</span>
+            <div class="stat-card-val" style="color:var(--success)">{{ profile.stats.tasks_done }}</div>
+            <div class="stat-card-label">Заданий выполнено</div>
+            <div class="stat-card-trend" style="color:var(--muted)">Уникальные задания</div>
           </div>
         </div>
-        {% endfor %}
+        <div class="col">
+          <div class="stat-card h-100 stat-card-center">
+            <span class="stat-card-icon">🎯</span>
+            <div class="stat-card-val" style="color:var(--success)">{{ profile.stats.avg_score }}</div>
+            <div class="stat-card-label">Средний балл</div>
+            <div class="stat-card-trend" style="color:var(--muted)">Все попытки</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stat-card h-100 stat-card-center">
+            <span class="stat-card-icon">🔥</span>
+            <div class="stat-card-val" style="color:var(--accent)">{{ profile.stats.streak_days }}</div>
+            <div class="stat-card-label">Дней подряд</div>
+            <div class="stat-card-trend" style="color:var(--muted)">Активность</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stat-card h-100 stat-card-center">
+            <span class="stat-card-icon">♿</span>
+            <div class="stat-card-val" style="color:var(--accent2)">{{ profile.stats.accessibility_tasks }}</div>
+            <div class="stat-card-label">Заданий на доступность</div>
+            <div class="stat-card-trend" style="color:var(--muted)">Ур. 3</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -63,8 +91,9 @@
         <h2 class="section-title mb-0">Активность</h2>
         <div class="d-flex align-items-center gap-2" id="yearSwitcher">
           <select id="yearSelect" class="year-btn" onchange="setCalendarYear(parseInt(this.value))">
-            <option value="2024">2024</option>
-            <option value="2025" selected>2025</option>
+            {% for y in profile.activity_years %}
+            <option value="{{ y }}" {% if loop.first %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
           </select>
         </div>
       </div>
@@ -113,22 +142,62 @@
         <h2 class="section-title mb-0">Прогресс по навыкам</h2>
       </div>
       <div class="row row-cols-1 row-cols-md-2 g-3">
-        {% for skill in profile.skills %}
         <div class="col">
           <div class="stat-card" style="gap:14px">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <div class="fw-semibold mb-1">{{ skill.icon }} {{ skill.name }}</div>
-                <div class="small" style="color:var(--muted)">{{ skill.note }}</div>
+                <div class="fw-semibold mb-1">🎵 Цветовая гармония</div>
+                <div class="small" style="color:var(--muted)">Средний показатель</div>
               </div>
-              <div class="stat-card-val" style="color:{{ skill.color }}">{{ skill.value }}%</div>
+              <div class="stat-card-val" style="color:var(--success)">{{ profile.skills.harmony }}%</div>
             </div>
             <div style="height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden">
-              <div style="height:100%;width:{{ skill.value }}%;background:linear-gradient(90deg,{{ skill.gradient }});border-radius:6px;transition:width .8s ease"></div>
+              <div style="height:100%;width:{{ profile.skills.harmony }}%;background:linear-gradient(90deg,#6bffcc,#4fcca0);border-radius:6px;transition:width .8s ease"></div>
             </div>
           </div>
         </div>
-        {% endfor %}
+        <div class="col">
+          <div class="stat-card" style="gap:14px">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold mb-1">💙 Эмоциональный отклик</div>
+                <div class="small" style="color:var(--muted)">Средний показатель</div>
+              </div>
+              <div class="stat-card-val" style="color:var(--accent)">{{ profile.skills.emotion }}%</div>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:{{ profile.skills.emotion }}%;background:linear-gradient(90deg,#c8b4ff,#8b5fff);border-radius:6px;transition:width .8s ease"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stat-card" style="gap:14px">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold mb-1">⚡ Контрастность WCAG</div>
+                <div class="small" style="color:var(--muted)">Средний показатель</div>
+              </div>
+              <div class="stat-card-val" style="color:var(--accent2)">{{ profile.skills.contrast }}%</div>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:{{ profile.skills.contrast }}%;background:linear-gradient(90deg,#ff9f6b,#e07040);border-radius:6px;transition:width .8s ease"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stat-card" style="gap:14px">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold mb-1">👁️ Дальтонизм</div>
+                <div class="small" style="color:var(--muted)">Средний показатель</div>
+              </div>
+              <div class="stat-card-val" style="color:#ffd93d">{{ profile.skills.colorblind }}%</div>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:{{ profile.skills.colorblind }}%;background:linear-gradient(90deg,#ffd93d,#f0b800);border-radius:6px;transition:width .8s ease"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -140,6 +209,8 @@
 <script>
   // Передаём задания из Python в JS
   window.ALL_TASKS = {{ profile.completed_tasks | tojson }};
+  window.ACTIVITY_DATA = {{ profile.activity | tojson }};
+  window.ACTIVITY_YEARS = {{ profile.activity_years | tojson }};
 
   document.addEventListener('DOMContentLoaded', () => {
     initCalendar();

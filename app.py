@@ -2,8 +2,10 @@ from flask import Flask, render_template
 from flask_migrate import Migrate
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import current_user
-from models import db 
+from datetime import datetime, date, timedelta
+from models import db, Result, Task, Emotion, HarmonyType
 from auth import bp as auth_bp, init_login_manager
+from admin import bp as admin_bp
 
 app = Flask(__name__)
 
@@ -253,208 +255,74 @@ PROFILE = {
     ],
 }
 
-# ═══════════════════════════════════════════════════════
-# ADMIN — данные и маршруты
-# ═══════════════════════════════════════════════════════
+# === Profile aggregates ===
+LEVEL_BADGES = {
+    1: "🟢 Базовый уровень",
+    2: "🟣 Продвинутый уровень",
+    3: "🟠 Экспертный уровень",
+}
 
-from flask import request
+MONTHS_RU = {
+    1: "января",
+    2: "февраля",
+    3: "марта",
+    4: "апреля",
+    5: "мая",
+    6: "июня",
+    7: "июля",
+    8: "августа",
+    9: "сентября",
+    10: "октября",
+    11: "ноября",
+    12: "декабря",
+}
 
-ADMIN = {"name": "Анна Д.", "role": "Администратор"}
-
-# ── Вспомогательный LCG для стабильных демо-данных ──────
-def _lcg_seq(base, variance, seed, n=7):
-    s = seed % 2147483647
-    result = []
-    for _ in range(n):
-        s = s * 16807 % 2147483647
-        v = (s - 1) / 2147483646
-        result.append(round(base + (v - 0.5) * 2 * variance))
-    return result
-
-
-def _get_period():
-    return request.args.get("period", "7d")
-
-
-def _admin_context():
-    """Общий контекст для всех admin-страниц."""
-    return {
-        "admin":  ADMIN,
-        "period": _get_period(),
-        "stats":  {"total_users": "1 247"},
-    }
+HARMONY_LABELS = {
+    HarmonyType.analogous: "Аналоговая",
+    HarmonyType.complementary: "Комплементарная",
+    HarmonyType.triadic: "Триадная",
+    HarmonyType.monochromatic: "Монохроматическая",
+}
 
 
-# ── Overview data ────────────────────────────────────────
-def _overview_data():
-    return {
-        "kpis": [
-            {"label": "Активных пользователей", "value": "1 247", "color": "green",
-             "trend": "+12% за период", "up": True},
-            {"label": "Заданий выполнено", "value": "8 934", "color": "purple",
-             "trend": "+7% за период", "up": True},
-            {"label": "Средний балл", "value": "82.4", "color": "orange",
-             "trend": "−0.3 за период", "up": False},
-            {"label": "Дней подряд (медиана)", "value": "11", "color": "yellow",
-             "trend": "+2 за период", "up": True},
-        ],
-        "activity_started":  _lcg_seq(320, 80, 5),
-        "activity_finished": _lcg_seq(250, 70, 6),
-        "level_pcts": [51, 32, 17],
-        "level_legend": [
-            {"label": "Уровень 1 · Базовый",     "color": "#6bffcc", "pct": 51},
-            {"label": "Уровень 2 · Продвинутый", "color": "#c8b4ff", "pct": 32},
-            {"label": "Уровень 3 · Экспертный",  "color": "#ff9f6b", "pct": 17},
-        ],
-        "popular_tasks": [
-            {"label": "🌊 Спокойствие",     "color": "#6bffcc", "pct": 94},
-            {"label": "🌸 Нежность",         "color": "#c8b4ff", "pct": 87},
-            {"label": "🔥 Энергия",          "color": "#ff9f6b", "pct": 79},
-            {"label": "🌙 Таинственность",   "color": "#c8b4ff", "pct": 72},
-            {"label": "♿ Доступность",       "color": "#ff9f6b", "pct": 58},
-        ],
-        "retention": [100, 74, 58, 44, 31],
-        "harmony_usage": [
-            {"label": "Аналоговая",      "color": "#6bffcc", "pct": 82},
-            {"label": "Монохромная",     "color": "#c8b4ff", "pct": 64},
-            {"label": "Комплементарная", "color": "#ff9f6b", "pct": 51},
-            {"label": "Триадная",        "color": "#ffd93d", "pct": 38},
-        ],
-    }
+def format_since(dt: datetime) -> str:
+    return f"{MONTHS_RU.get(dt.month, '')} {dt.year}"
 
 
-# ── Users data ───────────────────────────────────────────
-def _users_data():
-    return {
-        "kpis": [
-            {"label": "Всего пользователей", "value": "1 247", "color": "green",
-             "trend": "+47 за период", "up": True,
-             "spark_data": _lcg_seq(1200, 30, 10), "spark_color": "#6bffcc"},
-            {"label": "Новых за период", "value": "183", "color": "purple",
-             "trend": "+23% к прошлому", "up": True,
-             "spark_data": _lcg_seq(25, 8, 11), "spark_color": "#c8b4ff"},
-            {"label": "Активных сегодня", "value": "94", "color": "orange",
-             "trend": "из 1247 всего", "up": True,
-             "spark_data": _lcg_seq(80, 20, 12), "spark_color": "#ff9f6b"},
-            {"label": "Отток за период", "value": "2.3%", "color": "yellow",
-             "trend": "−0.4% к прошлому", "up": True,
-             "spark_data": _lcg_seq(2, 1, 13), "spark_color": "#ffd93d"},
-        ],
-        "monthly_growth": _lcg_seq(80, 30, 20, n=12),
-        "funnel": [
-            {"emoji": "🟢", "name": "Уровень 1 пройден", "sub": "Базовый · Гармония + эмоция",
-             "color": "#6bffcc", "count": 786, "pct": 63},
-            {"emoji": "🟣", "name": "Уровень 2 пройден", "sub": "Продвинутый · Без подсказок",
-             "color": "#c8b4ff", "count": 432, "pct": 35},
-            {"emoji": "🟠", "name": "Уровень 3 пройден", "sub": "Экспертный · WCAG + дальтонизм",
-             "color": "#ff9f6b", "count": 178, "pct": 14},
-        ],
-        "score_distribution": [45, 98, 187, 324, 412, 181],
-    }
+def format_ago(dt: datetime, now: datetime) -> str:
+    days = max((now.date() - dt.date()).days, 0)
+    if days == 0:
+        return "Сегодня"
+    if days == 1:
+        return "Вчера"
+    if days < 7:
+        return f"{days} дня назад"
+    weeks = days // 7
+    if weeks < 5:
+        return f"{weeks} нед. назад"
+    months = max(days // 30, 1)
+    return f"{months} мес. назад"
 
 
-# ── Tasks data ───────────────────────────────────────────
-def _tasks_data():
-    rows = [
-        {"icon":"🌊","name":"Спокойствие",         "lv":1,"harmony":"Аналоговая",      "avg_attempts":5.1, "pass_pct":94,"trend_icon":"↑","trend_color":"#6bffcc","spark":_lcg_seq(94,12,40)},
-        {"icon":"🌸","name":"Нежность",              "lv":1,"harmony":"Монохромная",     "avg_attempts":2.8, "pass_pct":91,"trend_icon":"↑","trend_color":"#6bffcc","spark":_lcg_seq(91,10,41)},
-        {"icon":"🌅","name":"Рассвет",               "lv":1,"harmony":"Аналоговая",      "avg_attempts":3.2, "pass_pct":87,"trend_icon":"→","trend_color":"#ffd93d","spark":_lcg_seq(87,8,42)},
-        {"icon":"🌿","name":"Минимализм",            "lv":2,"harmony":"Монохромная",     "avg_attempts":4.0, "pass_pct":83,"trend_icon":"↑","trend_color":"#6bffcc","spark":_lcg_seq(83,10,43)},
-        {"icon":"🔥","name":"Энергия",               "lv":1,"harmony":"Компл.",          "avg_attempts":3.9, "pass_pct":79,"trend_icon":"↓","trend_color":"#ff6b8a","spark":_lcg_seq(79,14,44)},
-        {"icon":"🌙","name":"Таинственность",        "lv":2,"harmony":"Без ограничений", "avg_attempts":5.7, "pass_pct":72,"trend_icon":"→","trend_color":"#ffd93d","spark":_lcg_seq(72,12,45)},
-        {"icon":"🌊","name":"Океан",                 "lv":2,"harmony":"Аналоговая",      "avg_attempts":4.8, "pass_pct":71,"trend_icon":"↑","trend_color":"#6bffcc","spark":_lcg_seq(71,10,46)},
-        {"icon":"🖤","name":"Контраст",              "lv":3,"harmony":"Компл. + WCAG",  "avg_attempts":8.2, "pass_pct":64,"trend_icon":"↓","trend_color":"#ff6b8a","spark":_lcg_seq(64,14,47)},
-        {"icon":"♿","name":"Доступность",            "lv":3,"harmony":"WCAG AA",         "avg_attempts":9.4, "pass_pct":58,"trend_icon":"→","trend_color":"#ffd93d","spark":_lcg_seq(58,10,48)},
-        {"icon":"❄️","name":"Арктика",               "lv":3,"harmony":"Моно + WCAG AAA","avg_attempts":14.1,"pass_pct":44,"trend_icon":"↓","trend_color":"#ff6b8a","spark":_lcg_seq(44,10,49)},
-    ]
-    return {
-        "kpis": [
-            {"label": "Всего попыток",     "value": "21 381", "color": "purple",
-             "trend": "+8% за период", "up": True,
-             "spark_data": _lcg_seq(3000, 600, 30), "spark_color": "#c8b4ff"},
-            {"label": "Успешных попыток",  "value": "14 207", "color": "green",
-             "trend": "66% успеха", "up": True,
-             "spark_data": _lcg_seq(2000, 400, 31), "spark_color": "#6bffcc"},
-            {"label": "Среднее попыток",   "value": "2.4",    "color": "orange",
-             "trend": "+0.2 к норме", "up": False,
-             "spark_data": _lcg_seq(3, 1, 32), "spark_color": "#ff9f6b"},
-            {"label": "Самое сложное",     "value": "Арктика","color": "yellow",
-             "trend": "14 попыток ср.", "up": False,
-             "spark_data": [7,8,9,11,12,13,14], "spark_color": "#ffd93d"},
-        ],
-        "rows": rows,
-    }
+def score_class(score: int) -> str:
+    if score >= 85:
+        return "s-good"
+    if score >= 70:
+        return "s-ok"
+    return "s-low"
 
 
-# ── Skills data ──────────────────────────────────────────
-def _skills_data():
-    return {
-        "platform_avg": [
-            {"icon":"🎵","name":"Цветовая гармония", "pct":74,"delta":"+6%","up":True, "color":"#6bffcc"},
-            {"icon":"💙","name":"Эмоц. отклик",       "pct":68,"delta":"+4%","up":True, "color":"#c8b4ff"},
-            {"icon":"♿","name":"Контрастность WCAG", "pct":49,"delta":"+2%","up":True, "color":"#ff9f6b"},
-            {"icon":"👁","name":"Дальтонизм",          "pct":31,"delta":"−1%","up":False,"color":"#ffd93d"},
-        ],
-        "weak_zones": [
-            {"label":"👁 Дальтонизм · Тританопия",  "color":"#ff6b8a","pct":23},
-            {"label":"♿ WCAG AAA (Уровень 3)",       "color":"#ff9f6b","pct":31},
-            {"label":"👁 Дальтонизм · Протанопия",  "color":"#ffd93d","pct":39},
-            {"label":"🎵 Триадная гармония",          "color":"#ffd93d","pct":44},
-            {"label":"💙 Абстрактные эмоции",        "color":"#c8b4ff","pct":51},
-        ],
-        "by_level": [
-            # Level 1
-            [{"icon":"🎵","name":"Цветовая гармония","pct":88,"color":"#6bffcc"},
-             {"icon":"💙","name":"Эмоц. отклик",      "pct":83,"color":"#6bffcc"}],
-            # Level 2 (not shown in template but kept for consistency)
-            [{"icon":"🎵","name":"Цветовая гармония","pct":74,"color":"#c8b4ff"},
-             {"icon":"💙","name":"Эмоц. отклик",      "pct":69,"color":"#c8b4ff"}],
-            # Level 3
-            [{"icon":"♿","name":"Контрастность WCAG","pct":49,"color":"#ff9f6b"},
-             {"icon":"👁","name":"Дальтонизм",          "pct":31,"color":"#ffd93d"},
-             {"icon":"🎵","name":"Цветовая гармония",  "pct":62,"color":"#ff9f6b"},
-             {"icon":"💙","name":"Эмоц. отклик",       "pct":58,"color":"#ff9f6b"}],
-        ],
-    }
-
-
-# ── Alerts data ──────────────────────────────────────────
-def _alerts_data():
-    return {
-        "items": [
-            {"type": "warn", "icon": "⚠️",
-             "title": "Уровень 3 · Низкий процент прохождения",
-             "body": "За последние 30 дней среднее прохождение задания «Арктика» составляет 44% — на 18% ниже порогового значения. Рекомендуется пересмотреть сложность или добавить промежуточные подсказки для проверки WCAG AAA.",
-             "action_url": "/admin/tasks", "action_label": "К заданиям →"},
-            {"type": "warn", "icon": "⚠️",
-             "title": "Навык «Дальтонизм» — отстающий",
-             "body": "Средний прогресс по навыку дальтонизм остаётся на уровне 31%. За последние 4 недели роста нет. Возможная причина — недостаточное количество практических заданий на симуляцию тританопии.",
-             "action_url": "/admin/skills", "action_label": "К навыкам →"},
-            {"type": "info", "icon": "ℹ️",
-             "title": "Рост новых пользователей +23%",
-             "body": "За последние 30 дней зафиксирован рост регистраций на 23% по сравнению с предыдущим периодом. Пиковый день — среда. Рекомендуется проверить нагрузку на серверы в рабочие дни между 12:00 и 15:00.",
-             "action_url": None, "action_label": None},
-            {"type": "info", "icon": "ℹ️",
-             "title": "Аналитический отчёт готов",
-             "body": "Ежемесячный агрегированный отчёт за текущий период сформирован. Все данные анонимизированы по стандарту k-анонимности (k≥5). Доступен для выгрузки в формате CSV.",
-             "action_url": "?export=csv", "action_label": "↓ Скачать CSV"},
-        ],
-        "system_chips": [
-            {"label": "Аноним. уровень", "value": "k≥5",  "color": "#6bffcc"},
-            {"label": "Персон. данных",  "value": "0",     "color": "#6bffcc"},
-            {"label": "Сессий сегодня",  "value": "312",   "color": "#c8b4ff"},
-            {"label": "Запросов / мин",  "value": "47",    "color": "#ffd93d"},
-            {"label": "Ошибок (24ч)",    "value": "3",     "color": "#6bffcc"},
-        ],
-        "error_counts": _lcg_seq(4, 3, 99),
-        "anon_status": [
-            {"label": "Стандарт",         "value": "k≥5",    "color": "#6bffcc", "sub": "k-анонимность"},
-            {"label": "Персональных ID",   "value": "0",      "color": "#6bffcc", "sub": "не хранится"},
-            {"label": "Срок хранения",     "value": "90 дн",  "color": "#c8b4ff", "sub": "агрегаты"},
-        ],
-    }
-
-
+def compute_streak(activity_data: dict, now: datetime) -> int:
+    if not activity_data:
+        return 0
+    cursor = now.date()
+    if activity_data.get(cursor.isoformat(), 0) == 0:
+        cursor = cursor - timedelta(days=1)
+    streak = 0
+    while activity_data.get(cursor.isoformat(), 0) > 0:
+        streak += 1
+        cursor = cursor - timedelta(days=1)
+    return streak
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.errorhandler(SQLAlchemyError)
@@ -474,6 +342,7 @@ def landing():
 
 
 app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
 
 @app.route("/levels")
 def levels():
@@ -491,51 +360,164 @@ def game(level_id: int):
 
 @app.route("/profile")
 def profile():
-    return render_template("profile.html", profile=PROFILE)
+    if not current_user.is_authenticated:
+        profile_data = {
+            "name": PROFILE["name"],
+            "email": PROFILE["email"],
+            "since": PROFILE["since"],
+            "city": PROFILE["city"],
+            "level_badge": PROFILE["level_badge"],
+            "stats": {
+                "tasks_done": int(PROFILE["stats"][0]["value"]),
+                "avg_score": int(PROFILE["stats"][1]["value"]),
+                "streak_days": int(PROFILE["stats"][2]["value"]),
+                "accessibility_tasks": int(PROFILE["stats"][3]["value"]),
+            },
+            "skills": {
+                "harmony": int(PROFILE["skills"][0]["value"]),
+                "emotion": int(PROFILE["skills"][1]["value"]),
+                "contrast": int(PROFILE["skills"][2]["value"]),
+                "colorblind": int(PROFILE["skills"][3]["value"]),
+            },
+            "completed_tasks": PROFILE["completed_tasks"],
+            "activity": {},
+            "activity_years": [date.today().year],
+        }
+        return render_template("profile.html", profile=profile_data)
+
+    now = datetime.now()
+    user_id = current_user.id
+
+    results = db.session.execute(
+        db.select(Result)
+        .where(Result.user_id == user_id)
+        .order_by(Result.completed_at.desc())
+    ).scalars().all()
+
+    unique_tasks_count = db.session.execute(
+        db.select(db.func.count(db.distinct(Result.task_id)))
+        .where(Result.user_id == user_id)
+    ).scalar() or 0
+
+    avg_score = db.session.execute(
+        db.select(db.func.avg(Result.score_total))
+        .where(Result.user_id == user_id)
+    ).scalar()
+    avg_score = round(avg_score) if avg_score is not None else 0
+
+    accessibility_count = db.session.execute(
+        db.select(db.func.count(db.distinct(Result.task_id)))
+        .join(Task, Task.id == Result.task_id)
+        .where(Result.user_id == user_id, Task.level_number == 3)
+    ).scalar() or 0
+
+    avg_harmony = db.session.execute(
+        db.select(db.func.avg(Result.score_harmony))
+        .where(Result.user_id == user_id)
+    ).scalar()
+    avg_emotion = db.session.execute(
+        db.select(db.func.avg(Result.score_emotion))
+        .where(Result.user_id == user_id)
+    ).scalar()
+    avg_contrast = db.session.execute(
+        db.select(db.func.avg(Result.score_contrast))
+        .where(Result.user_id == user_id, Result.score_contrast.is_not(None))
+    ).scalar()
+    avg_colorblind = db.session.execute(
+        db.select(db.func.avg(Result.score_colorblind))
+        .where(Result.user_id == user_id, Result.score_colorblind.is_not(None))
+    ).scalar()
+
+    avg_harmony = round(avg_harmony) if avg_harmony is not None else 0
+    avg_emotion = round(avg_emotion) if avg_emotion is not None else 0
+    avg_contrast = round(avg_contrast) if avg_contrast is not None else 0
+    avg_colorblind = round(avg_colorblind) if avg_colorblind is not None else 0
+
+    max_level = db.session.execute(
+        db.select(db.func.max(Task.level_number))
+        .join(Result, Result.task_id == Task.id)
+        .where(Result.user_id == user_id)
+    ).scalar() or 1
+    level_badge = LEVEL_BADGES.get(max_level, LEVEL_BADGES[1])
+
+    results_by_task = {}
+    attempts_by_task = {}
+    for r in results:
+        attempts_by_task[r.task_id] = attempts_by_task.get(r.task_id, 0) + 1
+        if r.task_id not in results_by_task:
+            results_by_task[r.task_id] = r
+
+    completed_tasks = []
+    task_ids = list(results_by_task.keys())
+    if task_ids:
+        tasks = db.session.execute(
+            db.select(Task, Emotion)
+            .outerjoin(Emotion, Emotion.id == Task.emotion_id)
+            .where(Task.id.in_(task_ids))
+        ).all()
+        task_map = {t.id: (t, e) for t, e in tasks}
+        for task_id, last_result in results_by_task.items():
+            task, emotion = task_map.get(task_id, (None, None))
+            if not task:
+                continue
+            icon = (emotion.emoji if emotion and emotion.emoji else "🎨")
+            harmony = last_result.harmony_used or task.harmony_type
+            completed_tasks.append({
+                "icon": icon,
+                "name": task.title,
+                "lv": task.level_number,
+                "lv_style": (
+                    "background:rgba(200,180,255,.12);color:#c8b4ff"
+                    if task.level_number == 2 else
+                    "background:rgba(255,159,107,.12);color:#ff9f6b"
+                    if task.level_number == 3 else ""
+                ),
+                "harmony": HARMONY_LABELS.get(harmony, "Без подсказок"),
+                "ago": format_ago(last_result.completed_at, now),
+                "attempts": attempts_by_task.get(task_id, 0),
+                "score": last_result.score_total,
+                "sc": score_class(last_result.score_total),
+            })
+
+    activity_data = {}
+    for r in results:
+        key = r.completed_at.date().isoformat()
+        activity_data[key] = activity_data.get(key, 0) + 1
+
+    streak_days = compute_streak(activity_data, now)
+
+    activity_years = sorted(
+        {int(k[:4]) for k in activity_data.keys()},
+        reverse=True
+    )
+    if not activity_years:
+        activity_years = [date.today().year]
+
+    profile_data = {
+        "name": current_user.full_name,
+        "email": current_user.email,
+        "since": format_since(current_user.created_at),
+        "city": current_user.city or "—",
+        "level_badge": level_badge,
+        "stats": {
+            "tasks_done": unique_tasks_count,
+            "avg_score": avg_score,
+            "streak_days": streak_days,
+            "accessibility_tasks": accessibility_count,
+        },
+        "skills": {
+            "harmony": avg_harmony,
+            "emotion": avg_emotion,
+            "contrast": avg_contrast,
+            "colorblind": avg_colorblind,
+        },
+        "completed_tasks": completed_tasks,
+        "activity": activity_data,
+        "activity_years": activity_years,
+    }
+    return render_template("profile.html", profile=profile_data)
 
 @app.route("/profile/edit")
 def profile_edit():
     return render_template("profile_edit.html", profile=PROFILE)
-
-# ── Admin routes ─────────────────────────────────────────
-
-@app.route("/admin")
-@app.route("/admin/overview")
-def admin_overview():
-    return render_template(
-        "admin_overview.html",
-        active_page="overview",
-        overview=_overview_data(),
-        **_admin_context(),
-    )
-
-
-@app.route("/admin/users")
-def admin_users():
-    return render_template(
-        "admin_users.html",
-        active_page="users",
-        users=_users_data(),
-        **_admin_context(),
-    )
-
-
-@app.route("/admin/tasks")
-def admin_tasks():
-    return render_template(
-        "admin_tasks.html",
-        active_page="tasks",
-        tasks_stats=_tasks_data(),
-        **_admin_context(),
-    )
-
-
-@app.route("/admin/skills")
-def admin_skills():
-    return render_template(
-        "admin_skills.html",
-        active_page="skills",
-        skills=_skills_data(),
-        **_admin_context(),
-    )
 

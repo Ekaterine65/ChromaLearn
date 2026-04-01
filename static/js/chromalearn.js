@@ -433,26 +433,16 @@ function renderTaskPage(page) {
 
 /* Профиль: пагинация выполненных заданий */
 
-let calYear = 2025;
-
-function createLcg(seed) {
-  let s = seed % 2147483647; if (s <= 0) s += 2147483646;
-  return () => { s = s * 16807 % 2147483647; return (s-1) / 2147483646; };
-}
-
-function generateYearData(year) {
-  const r = createLcg(year * 1337 + 42);
-  const data = {};
-  for (let d = new Date(year, 0, 1); d.getFullYear() === year; d.setDate(d.getDate()+1)) {
-    const key = d.toISOString().slice(0, 10);
-    const v = r();
-    data[key] = v < 0.55 ? 0 : v < 0.70 ? 1 : v < 0.83 ? 2 : v < 0.93 ? 3 : 4;
-  }
-  return data;
-}
+let calYear = (window.ACTIVITY_YEARS && window.ACTIVITY_YEARS.length)
+  ? window.ACTIVITY_YEARS[0]
+  : new Date().getFullYear();
 
 function renderActivityCalendar(year) {
-  const data     = generateYearData(year);
+  const allData  = window.ACTIVITY_DATA || {};
+  const data = {};
+  Object.keys(allData).forEach(key => {
+    if (key.startsWith(String(year))) data[key] = allData[key];
+  });
   const weeksEl  = document.getElementById('calWeeks');
   const monthsEl = document.getElementById('calMonths');
   const totalEl  = document.getElementById('calTotal');
@@ -475,9 +465,10 @@ function renderActivityCalendar(year) {
       const day = days[w * 7 + dow];
       if (!day) { weeksHTML += '<div style="width:11px;height:11px"></div>'; continue; }
       const key   = day.toISOString().slice(0, 10);
-      const level = data[key] || 0;
-      total += level;
-      weeksHTML += `<div class="cal-cell${level > 0 ? ' l'+level : ''}" title="${key}: ${level} задан."></div>`;
+      const count = data[key] || 0;
+      const level = Math.min(4, count);
+      total += count;
+      weeksHTML += `<div class="cal-cell${level > 0 ? ' l'+level : ''}" title="${key}: ${count} задан."></div>`;
     }
     weeksHTML += '</div>';
   }

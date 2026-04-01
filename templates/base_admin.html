@@ -26,20 +26,20 @@
 
     <div class="sidebar-section-label">Аналитика</div>
 
-    <a href="{{ url_for('admin_overview') }}"
+    <a href="{{ url_for('admin.overview') }}"
        class="nav-item text-decoration-none {{ 'active' if active_page == 'overview' }}">
       <span class="nav-icon">📊</span> Обзор
     </a>
-    <a href="{{ url_for('admin_users') }}"
+    <a href="{{ url_for('admin.users') }}"
        class="nav-item text-decoration-none {{ 'active' if active_page == 'users' }}">
       <span class="nav-icon">👥</span> Пользователи
       <span class="nav-badge">{{ stats.total_users | default('1 247') }}</span>
     </a>
-    <a href="{{ url_for('admin_tasks') }}"
+    <a href="{{ url_for('admin.tasks') }}"
        class="nav-item text-decoration-none {{ 'active' if active_page == 'tasks' }}">
       <span class="nav-icon">🎨</span> Задания
     </a>
-    <a href="{{ url_for('admin_skills') }}"
+    <a href="{{ url_for('admin.skills') }}"
        class="nav-item text-decoration-none {{ 'active' if active_page == 'skills' }}">
       <span class="nav-icon">📈</span> Навыки
     </a>
@@ -52,8 +52,8 @@
     <div class="sidebar-footer">
       <div class="admin-avatar">АД</div>
       <div>
-        <div class="admin-name">{{ admin.name | default('Анна Д.') }}</div>
-        <div class="admin-role">{{ admin.role | default('Администратор') }}</div>
+        <div class="admin-name">{{ admin.name }}</div>
+        <div class="admin-role">{{ admin.role }}</div>
       </div>
     </div>
   </nav>
