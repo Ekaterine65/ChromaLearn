@@ -217,7 +217,7 @@ def _alerts_data():
 @admin_required
 def overview():
     return render_template(
-        "admin_overview.html",
+        "admin/admin_overview.html",
         active_page="overview",
         overview=_overview_data(),
         **_admin_context(),
@@ -228,7 +228,7 @@ def overview():
 @admin_required
 def users():
     return render_template(
-        "admin_users.html",
+        "admin/admin_users.html",
         active_page="users",
         users=_users_data(),
         **_admin_context(),
@@ -239,7 +239,7 @@ def users():
 @admin_required
 def tasks():
     return render_template(
-        "admin_tasks.html",
+        "admin/admin_tasks.html",
         active_page="tasks",
         tasks_stats=_tasks_data(),
         **_admin_context(),
@@ -250,7 +250,7 @@ def tasks():
 @admin_required
 def skills():
     return render_template(
-        "admin_skills.html",
+        "admin/admin_skills.html",
         active_page="skills",
         skills=_skills_data(),
         **_admin_context(),

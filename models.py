@@ -6,7 +6,7 @@ import sqlalchemy as sa
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, DateTime, ForeignKey, MetaData
+from sqlalchemy import String, Integer, DateTime, ForeignKey, MetaData, Float, Text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -101,14 +101,15 @@ class Color(Base):
     __tablename__ = "colors"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[Optional[str]] = mapped_column(String(100))
+    name: Mapped[Optional[str]] = mapped_column(String(200))
     hex: Mapped[str] = mapped_column(String(7))
     red: Mapped[int] = mapped_column(Integer)
     green: Mapped[int] = mapped_column(Integer)
     blue: Mapped[int] = mapped_column(Integer)
-    hue: Mapped[int] = mapped_column(Integer)
-    saturate: Mapped[int] = mapped_column(Integer)
-    lightness: Mapped[int] = mapped_column(Integer)
+    hue: Mapped[float] = mapped_column(Float)
+    saturate: Mapped[float] = mapped_column(Float)
+    lightness: Mapped[float] = mapped_column(Float)
+    use_case: Mapped[Optional[str]] = mapped_column(Text)
 
     emotion_colors: Mapped[List["EmotionColor"]] = relationship(back_populates="color")
 
