@@ -1,9 +1,10 @@
-from datetime import datetime, date, timedelta
+﻿from datetime import datetime, date, timedelta
+import random
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, validators
 
-from models import db, Result, Task, Emotion, HarmonyType
+from models import db, Result, Task, Emotion, HarmonyType, EmotionColor, Color
 
 
 class LoginForm(FlaskForm):
@@ -305,3 +306,135 @@ def build_profile_data(current_user) -> dict:
         "activity": activity_data,
         "activity_years": activity_years,
     }
+
+# Task generation settings
+TASK_HARMONY_WEIGHTS = {
+    1: 0.30, 
+    2: 0.15, 
+    3: 0.15,  
+}
+
+EMOTION_TEMPLATES = [
+    "Назначьте 5 цветов по ролям, передающих эмоцию «{emotion}».",
+    "Создайте палитру, передающую эмоцию «{emotion}».",
+]
+
+EMOTION_HARMONY_TEMPLATES = [
+    "Создайте палитру, передающую эмоцию «{emotion}», и соблюдайте гармонию: {harmony}.",
+    "Передайте эмоцию «{emotion}» и используйте гармонию {harmony}.",
+]
+
+ACCESSIBILITY_TEXT = (
+    "Критерии доступности: WCAG 2.1 AA. "
+    "Контраст текст/фон ≥ 4.5:1. "
+    "Палитра должна быть различима при всех типах дальтонизма."
+)
+
+# Task generation 
+
+def _pick_random_emotion() -> Emotion:
+    return db.session.execute(
+        db.select(Emotion).order_by(db.func.random())
+    ).scalars().first()
+
+
+def _pick_harmony(level_number: int) -> HarmonyType | None:
+    weight = TASK_HARMONY_WEIGHTS.get(level_number, 0.0)
+    if random.random() >= weight:
+        return None
+    return random.choice(list(HarmonyType))
+
+
+def _build_task_description(emotion_name: str, harmony: HarmonyType | None, level_number: int) -> str:
+    if harmony:
+        base = random.choice(EMOTION_HARMONY_TEMPLATES).format(
+            emotion=emotion_name,
+            harmony=HARMONY_LABELS.get(harmony, str(harmony.value)),
+        )
+    else:
+        base = random.choice(EMOTION_TEMPLATES).format(emotion=emotion_name)
+    if level_number == 3:
+        return f"{base} {ACCESSIBILITY_TEXT}"
+    return base
+
+
+def _build_requirements(harmony: HarmonyType | None, level_number: int) -> list:
+    reqs = [
+        {"text": "Назначьте все 5 ролей", "done": False},
+        {"text": "Передайте заданную эмоцию", "done": False},
+    ]
+    if harmony:
+        reqs.append({
+            "text": f"Соблюдайте гармонию: {HARMONY_LABELS.get(harmony, harmony.value)}",
+            "done": False,
+        })
+    if level_number == 3:
+        reqs.extend([
+            {"text": "Контраст текст/фон ≥ 4.5:1", "done": False},
+            {"text": "Контраст UI ≥ 3:1", "done": False},
+            {"text": "Читаемо при протанопии", "done": False},
+            {"text": "Читаемо при дейтеранопии", "done": False},
+            {"text": "Читаемо при тританопии", "done": False},
+        ])
+    return reqs
+
+
+def _build_hints_for_emotion(emotion_id: int, limit: int = 3) -> list:
+    colors = db.session.execute(
+        db.select(Color)
+        .join(EmotionColor, EmotionColor.color_id == Color.id)
+        .where(EmotionColor.emotion_id == emotion_id)
+        .order_by(db.func.random())
+        .limit(limit)
+    ).scalars().all()
+    hints = []
+    for c in colors:
+        hints.append({
+            "color": c.hex,
+            "name": c.name or c.hex,
+            "text": c.use_case or "Выберите цвет, который усилит заданную эмоцию.",
+        })
+    return hints
+
+
+def generate_task(level_number: int, persist: bool = True) -> dict:
+    """
+    Generates a task for the given level and (optionally) saves it to DB.
+    Returns a dict ready for game.html (title/emoji/description/requirements/hints).
+    """
+    emotion = _pick_random_emotion()
+    if not emotion:
+        raise ValueError("No emotions found in database")
+
+    harmony = _pick_harmony(level_number)
+    title = emotion.name
+    description = _build_task_description(emotion.name, harmony, level_number)
+
+    task = Task(
+        level_number=level_number,
+        emotion_id=emotion.id,
+        title=title,
+        description=description,
+        harmony_type=harmony,
+    )
+    if persist:
+        db.session.add(task)
+        db.session.commit()
+
+    show_hints = level_number == 1
+    show_wcag = level_number >= 2
+    show_vision_sim = level_number == 3
+
+    return {
+        "id": task.id,
+        "level_id": level_number,
+        "title": title,
+        "emoji": emotion.emoji or "🎨",
+        "description": description,
+        "requirements": _build_requirements(harmony, level_number),
+        "hints": _build_hints_for_emotion(emotion.id) if show_hints else [],
+        "show_hints": show_hints,
+        "show_wcag": show_wcag,
+        "show_vision_sim": show_vision_sim,
+    }
+
