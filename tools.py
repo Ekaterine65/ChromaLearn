@@ -315,13 +315,13 @@ TASK_HARMONY_WEIGHTS = {
 }
 
 EMOTION_TEMPLATES = [
-    "Назначьте 5 цветов по ролям, передающих эмоцию «{emotion}».",
-    "Создайте палитру, передающую эмоцию «{emotion}».",
+    "Назначьте 5 цветов по ролям так, чтобы палитра ассоциировалась со словом «{emotion}».",
+    "Создайте палитру, которая визуально ассоциируется со словом «{emotion}».",
 ]
 
 EMOTION_HARMONY_TEMPLATES = [
-    "Создайте палитру, передающую эмоцию «{emotion}», и соблюдайте гармонию: {harmony}.",
-    "Передайте эмоцию «{emotion}» и используйте гармонию {harmony}.",
+    "Создайте палитру, которая ассоциируется со словом «{emotion}», и соблюдайте гармонию: {harmony}.",
+    "Добейтесь ассоциации со словом «{emotion}» и используйте гармонию {harmony}.",
 ]
 
 ACCESSIBILITY_TEXT = (
@@ -334,7 +334,9 @@ ACCESSIBILITY_TEXT = (
 
 def _pick_random_emotion() -> Emotion:
     return db.session.execute(
-        db.select(Emotion).order_by(db.func.random())
+        db.select(Emotion)
+        .where(Emotion.name_ru.is_not(None), Emotion.name_ru != "")
+        .order_by(db.func.random())
     ).scalars().first()
 
 
@@ -361,7 +363,7 @@ def _build_task_description(emotion_name: str, harmony: HarmonyType | None, leve
 def _build_requirements(harmony: HarmonyType | None, level_number: int) -> list:
     reqs = [
         {"text": "Назначьте все 5 ролей", "done": False},
-        {"text": "Передайте заданную эмоцию", "done": False},
+        {"text": "Передайте заданную ассоциацию", "done": False},
     ]
     if harmony:
         reqs.append({
@@ -392,7 +394,7 @@ def _build_hints_for_emotion(emotion_id: int, limit: int = 3) -> list:
         hints.append({
             "color": c.hex,
             "name": c.name or c.hex,
-            "text": c.use_case or "Выберите цвет, который усилит заданную эмоцию.",
+            "text": c.use_case or "Выберите цвет, который усилит заданную ассоциацию.",
         })
     return hints
 
@@ -404,16 +406,16 @@ def generate_task(level_number: int, persist: bool = True) -> dict:
     """
     emotion = _pick_random_emotion()
     if not emotion:
-        raise ValueError("No emotions found in database")
+        raise ValueError("No translated associations found in database")
 
     harmony = _pick_harmony(level_number)
-    title = emotion.name
-    description = _build_task_description(emotion.name, harmony, level_number)
+    emotion_title = emotion.name_ru or emotion.name
+    description = _build_task_description(emotion_title, harmony, level_number)
 
     task = Task(
         level_number=level_number,
         emotion_id=emotion.id,
-        title=title,
+        title=emotion_title,
         description=description,
         harmony_type=harmony,
     )
@@ -428,7 +430,7 @@ def generate_task(level_number: int, persist: bool = True) -> dict:
     return {
         "id": task.id,
         "level_id": level_number,
-        "title": title,
+        "title": emotion_title,
         "emoji": emotion.emoji or "🎨",
         "description": description,
         "requirements": _build_requirements(harmony, level_number),

@@ -19,9 +19,12 @@ import os
 import re
 import unicodedata
 
+import httpx
 import pandas as pd
 
 PARQUET_PATH = os.path.join(os.path.dirname(__file__), "color_pedia.parquet")
+YANDEX_TRANSLATE_URL = "https://translate.api.cloud.yandex.net/translate/v2/translate"
+TRANSLATE_BATCH_SIZE = 100
 
 
 # Словарь эмодзи для ключевых слов датасета 
@@ -260,6 +263,51 @@ def normalize_hex(hex_code: str) -> str:
     return "#" + hex_code.lstrip("#").upper()
 
 
+def normalize_translation(value: str) -> str | None:
+    value = re.sub(r"\s+", " ", (value or "").strip())
+    if not value:
+        return None
+    return value[:1].upper() + value[1:]
+
+
+def translate_keywords_ru(
+    words: list[str],
+    folder_id: str | None,
+    api_key: str | None,
+) -> dict[str, str]:
+    if not words:
+        return {}
+    if not folder_id or not api_key:
+        raise RuntimeError("Не заданы YANDEX_TRANSLATE_FOLDER_ID/YANDEX_TRANSLATE_API_KEY")
+
+    translated: dict[str, str] = {}
+    headers = {"Authorization": f"Api-Key {api_key}"}
+
+    with httpx.Client(timeout=30) as client:
+        for start in range(0, len(words), TRANSLATE_BATCH_SIZE):
+            batch = words[start:start + TRANSLATE_BATCH_SIZE]
+            response = client.post(
+                YANDEX_TRANSLATE_URL,
+                headers=headers,
+                json={
+                    "folderId": folder_id,
+                    "texts": batch,
+                    "sourceLanguageCode": "en",
+                    "targetLanguageCode": "ru",
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+            translations = payload.get("translations", [])
+
+            for source, item in zip(batch, translations):
+                text = normalize_translation(item.get("text", ""))
+                if text:
+                    translated[source] = text
+
+    return translated
+
+
 def seed():
     # Ленивый импорт — чтобы не падать если flask не настроен
     from app import app
@@ -375,6 +423,7 @@ def seed():
 
         existing_keys: set[str] = {normalize_name(k) for k in existing_emotions}
 
+        new_keywords: list[tuple[str, str]] = []
         for kw in sorted(all_keywords):
             if not is_valid_emotion(kw):
                 emotions_skipped += 1
@@ -387,15 +436,35 @@ def seed():
                 emotions_skipped += 1
                 continue
  
+            new_keywords.append((kw, name_norm))
+            existing_keys.add(dedup_key)
+
+        translations = translate_keywords_ru(
+            [name for _, name in new_keywords],
+            app.config.get("YANDEX_TRANSLATE_FOLDER_ID"),
+            app.config.get("YANDEX_TRANSLATE_API_KEY"),
+        )
+
+        emotions_translated = 0
+        emotions_without_translation = 0
+        for kw, name_norm in new_keywords:
             emoji_char = keyword_to_emoji(kw)
-            emotion = Emotion(name=name_norm, emoji=emoji_char)
+            name_ru = translations.get(name_norm)
+            emotion = Emotion(
+                name=name_norm,
+                name_ru=name_ru,
+                emoji=emoji_char,
+            )
             db.session.add(emotion)
             existing_emotions[name_norm] = emotion
-            existing_keys.add(dedup_key)
             emotions_added += 1
+            if name_ru:
+                emotions_translated += 1
+            else:
+                emotions_without_translation += 1
 
         db.session.flush()
-        print(f"   ✓ Добавлено: {emotions_added} | Пропущено (дубли): {emotions_skipped}")
+        print(f"   ✓ Добавлено: {emotions_added} | Переведено: {emotions_translated} | Без перевода: {emotions_without_translation} | Пропущено (дубли): {emotions_skipped}")
 
         # 3. EmotionColor 
         print("\n Строим связи EmotionColor...")

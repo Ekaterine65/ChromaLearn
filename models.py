@@ -71,6 +71,7 @@ class Emotion(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
+    name_ru: Mapped[Optional[str]] = mapped_column(String(100))
     emoji: Mapped[Optional[str]] = mapped_column(String(10))
 
     tasks: Mapped[List["Task"]] = relationship(back_populates="emotion")
