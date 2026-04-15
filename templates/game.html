@@ -1,11 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}ChromaLearn — {{ level.title }} · {{ task.emoji }} {{ task.title }}{% endblock %}
+{% if level_id == 1 %}
+  {% set level_title = 'Базовый' %}
+  {% set level_accent_color = '#6bffcc' %}
+  {% set level_accent_rgba = 'rgba(107,255,204,.12)' %}
+{% elif level_id == 2 %}
+  {% set level_title = 'Продвинутый' %}
+  {% set level_accent_color = '#c8b4ff' %}
+  {% set level_accent_rgba = 'rgba(200,180,255,.12)' %}
+{% else %}
+  {% set level_title = 'Экспертный' %}
+  {% set level_accent_color = '#ff9f6b' %}
+  {% set level_accent_rgba = 'rgba(255,159,107,.12)' %}
+{% endif %}
+
+{% block title %}ChromaLearn — {{ level_title }} · {{ task.emoji }} {{ task.title }}{% endblock %}
 
 {% block extra_head %}
 {# Передаём данные уровня в JS через data-атрибуты #}
 <script>
-  window.GAME_LEVEL    = {{ level.id }};
+  window.GAME_LEVEL    = {{ level_id }};
   window.SHOW_WCAG     = {{ 'true' if task.show_wcag else 'false' }};
   window.SHOW_VISION   = {{ 'true' if task.show_vision_sim else 'false' }};
 </script>
@@ -47,8 +61,8 @@
       <a href="{{ url_for('landing') }}" class="logo text-decoration-none fs-6">Chroma<span>Learn</span></a>
       <div class="divider"></div>
       <div class="level-pill"
-           style="background:{{ level.accent_rgba }};color:{{ level.accent_color }}">
-        Уровень {{ level.id }} · {{ level.title }}
+           style="background:{{ level_accent_rgba }};color:{{ level_accent_color }}">
+        Уровень {{ level_id }} · {{ level_title }}
       </div>
       <div class="task-title d-none d-lg-block">Задание: «{{ task.title }}»</div>
     </div>
@@ -61,7 +75,7 @@
       </div>
       <div class="divider d-none d-md-block"></div>
       <a href="{{ url_for('levels') }}" class="btn-sm text-decoration-none">← Уровни</a>
-      <button class="btn-sm-primary" onclick="showModal('result-modal-{{ level.id }}')">
+      <button class="btn-sm-primary" onclick="showModal('result-modal-{{ level_id }}')">
         Оценить работу
       </button>
       {% if current_user.is_authenticated %}
@@ -235,7 +249,7 @@
       </div>
 
       {# Harmony picker #}
-      {% if level.id == 1 %}
+      {% if level_id == 1 %}
       <div class="panel-section">
         <div class="panel-label">Тип гармонии</div>
         <div class="harmony-picker">
@@ -249,7 +263,7 @@
       {% endif %}
 
       {# WCAG — уровни 2 и 3 #}
-      {% if task.show_wcag and level.id == 3 %}
+      {% if task.show_wcag and level_id == 3 %}
       <div class="panel-section">
         <div class="panel-label">Контрастность WCAG</div>
         <div class="wcag-pair">
@@ -293,9 +307,9 @@
 {% endblock %}
 
 {% block modals %}
-<div class="modal-overlay" id="result-modal-{{ level.id }}" onclick="if (event.target === this) hideModal('result-modal-{{ level.id }}')">
+<div class="modal-overlay" id="result-modal-{{ level_id }}" onclick="if (event.target === this) hideModal('result-modal-{{ level_id }}')">
   <div class="modal">
-    <button type="button" class="modal-close" onclick="hideModal('result-modal-{{ level.id }}')">✕</button>
+    <button type="button" class="modal-close" onclick="hideModal('result-modal-{{ level_id }}')">✕</button>
 
     <div class="modal-score-circle" style="border-color:{{ modal.score_color }};color:{{ modal.score_color }}">
       <div class="modal-score-num">{{ modal.score }}</div>
@@ -317,7 +331,7 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-full btn-full-primary" onclick="hideModal('result-modal-{{ level.id }}')">Доработать палитру</button>
+      <button class="btn-full btn-full-primary" onclick="hideModal('result-modal-{{ level_id }}')">Доработать палитру</button>
       <button class="btn-full btn-full-outline" onclick="location.href='{{ url_for('levels') }}'">Завершить уровень →</button>
     </div>
   </div>

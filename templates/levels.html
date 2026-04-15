@@ -31,26 +31,25 @@
     </div>
 
     <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center w-100" style="max-width:1000px">
-      {% for level in levels %}
       <div class="col d-flex">
-        <a href="{{ url_for('game', level_id=level.id) }}"
-           class="level-card lv{{ level.id }} w-100 text-decoration-none d-flex flex-column gap-4 p-4">
+        <a href="{{ url_for('game', level_id=1) }}"
+           class="level-card lv1 w-100 text-decoration-none d-flex flex-column gap-4 p-4">
 
           <div class="lv-glow"></div>
 
-          <div class="lv-badge">{{ level.badge_emoji }} Уровень {{ level.id }}</div>
+          <div class="lv-badge">🟢 Уровень 1</div>
 
           <div>
-            <div class="lv-title">{{ level.title }}</div>
-            <div class="text-muted-cl mt-1 small">{{ level.subtitle }}</div>
+            <div class="lv-title">Базовый</div>
+            <div class="text-muted-cl mt-1 small">Гармония + ассоциация</div>
           </div>
 
-          <div class="lv-desc">{{ level.description }}</div>
+          <div class="lv-desc">Подберите палитру под заданную ассоциацию. Подсказки активны.</div>
 
           <div class="lv-tools d-flex flex-wrap gap-2">
-            {% for tool in level.tools %}
-            <span class="tool-tag">{{ tool }}</span>
-            {% endfor %}
+            <span class="tool-tag">Цветовой круг</span>
+            <span class="tool-tag">Типы палитр</span>
+            <span class="tool-tag">Подсказки</span>
           </div>
 
           <div class="lv-cta d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-cl">
@@ -60,7 +59,63 @@
 
         </a>
       </div>
-      {% endfor %}
+
+      <div class="col d-flex">
+        <a href="{{ url_for('game', level_id=2) }}"
+           class="level-card lv2 w-100 text-decoration-none d-flex flex-column gap-4 p-4">
+
+          <div class="lv-glow"></div>
+
+          <div class="lv-badge">🟣 Уровень 2</div>
+
+          <div>
+            <div class="lv-title">Продвинутый</div>
+            <div class="text-muted-cl mt-1 small">Интуиция и стиль</div>
+          </div>
+
+          <div class="lv-desc">Создайте палитру под абстрактное задание без подсказок.</div>
+
+          <div class="lv-tools d-flex flex-wrap gap-2">
+            <span class="tool-tag">Цветовой круг</span>
+            <span class="tool-tag">Без подсказок</span>
+          </div>
+
+          <div class="lv-cta d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-cl">
+            <span>Начать задание</span>
+            <span>→</span>
+          </div>
+
+        </a>
+      </div>
+
+      <div class="col d-flex">
+        <a href="{{ url_for('game', level_id=3) }}"
+           class="level-card lv3 w-100 text-decoration-none d-flex flex-column gap-4 p-4">
+
+          <div class="lv-glow"></div>
+
+          <div class="lv-badge">🟠 Уровень 3</div>
+
+          <div>
+            <div class="lv-title">Экспертный</div>
+            <div class="text-muted-cl mt-1 small">Доступность (WCAG)</div>
+          </div>
+
+          <div class="lv-desc">Обеспечьте контрастность WCAG 2.1 AA и различимость при дальтонизме.</div>
+
+          <div class="lv-tools d-flex flex-wrap gap-2">
+            <span class="tool-tag">Цветовой круг</span>
+            <span class="tool-tag">Симулятор</span>
+            <span class="tool-tag">WCAG AA</span>
+          </div>
+
+          <div class="lv-cta d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-cl">
+            <span>Начать задание</span>
+            <span>→</span>
+          </div>
+
+        </a>
+      </div>
     </div>
 
   </div>
