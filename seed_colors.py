@@ -1,4 +1,4 @@
-"""
+﻿"""
 seed_colors.py — заполнение таблиц Color, Emotion, EmotionColor
 из датасета boltuix/color-pedia (color_pedia.parquet).
 
@@ -11,6 +11,7 @@ seed_colors.py — заполнение таблиц Color, Emotion, EmotionColo
 
 Запуск:
     python seed_colors.py           — заполнить
+    python seed_colors.py translate-use-cases — перевести подсказки use_case
     python seed_colors.py unseed    — очистить (только Color/Emotion/EmotionColor)
 """
 
@@ -18,202 +19,55 @@ import sys
 import os
 import re
 import unicodedata
+import json
 
-import httpx
 import pandas as pd
+from deep_translator import GoogleTranslator
 
 PARQUET_PATH = os.path.join(os.path.dirname(__file__), "color_pedia.parquet")
-YANDEX_TRANSLATE_URL = "https://translate.api.cloud.yandex.net/translate/v2/translate"
+REPORT_PATH = os.path.join(os.path.dirname(__file__), "seed_colors_report.txt")
+TRANSLATION_CACHE_PATH = os.path.join(os.path.dirname(__file__), "seed_translation_cache.json")
 TRANSLATE_BATCH_SIZE = 100
+USE_CASE_MAX_CHARS = 220
 
 
-# Словарь эмодзи для ключевых слов датасета 
-KEYWORD_EMOJI: dict[str, str] = {
-    # Энергия / сила
-    "passionate":   "🔥",
-    "intense":      "⚡",
-    "bold":         "💪",
-    "powerful":     "💥",
-    "strong":       "🦾",
-    "energetic":    "⚡",
-    "dynamic":      "🌀",
-    "vibrant":      "🌈",
-    "fiery":        "🔥",
-    "fierce":       "🐯",
-    "dominant":     "👑",
-    "aggressive":   "⚔️",
-    "dramatic":     "🎭",
-    "exciting":     "🎉",
-    "stimulating":  "💡",
-    "active":       "🏃",
-    "lively":       "🎊",
-    "adventurous":  "🧭",
-    "daring":       "🎯",
-    "confident":    "😎",
-    "determined":   "🎯",
-    "ambitious":    "🚀",
-    "courageous":   "🦁",
-    "bold":         "💪",
+class SeedLog:
+    def __init__(self, path: str):
+        self.path = path
+        self.lines: list[str] = []
 
-    # Спокойствие / мир
-    "calm":         "🌊",
-    "peaceful":     "☮️",
-    "serene":       "🏔️",
-    "tranquil":     "🍃",
-    "relaxing":     "😌",
-    "soothing":     "💆",
-    "gentle":       "🌸",
-    "soft":         "🌸",
-    "tender":       "🤍",
-    "mild":         "🌤️",
-    "quiet":        "🤫",
-    "still":        "🌿",
-    "harmonious":   "☯️",
-    "balanced":     "⚖️",
-    "stable":       "🏛️",
-    "grounded":     "🌱",
-    "steady":       "⚓",
+    def add(self, text: str = "") -> None:
+        self.lines.append(text)
 
-    # Радость / счастье
-    "happy":        "😊",
-    "joyful":       "😄",
-    "cheerful":     "☀️",
-    "playful":      "🎈",
-    "fun":          "🎉",
-    "optimistic":   "🌟",
-    "uplifting":    "🎆",
-    "warm":         "🌞",
-    "sunny":        "☀️",
-    "bright":       "✨",
-    "positive":     "➕",
-    "delightful":   "🌼",
-    "whimsical":    "🦋",
-    "festive":      "🎊",
-    "radiant":      "🌟",
+    def section(self, title: str) -> None:
+        self.add("")
+        self.add("=" * 80)
+        self.add(title)
+        self.add("=" * 80)
 
-    # Печаль / меланхолия
-    "sad":          "😢",
-    "melancholic":  "🌧️",
-    "gloomy":       "🌑",
-    "dark":         "🖤",
-    "mysterious":   "🌙",
-    "moody":        "🌫️",
-    "somber":       "🪦",
-    "deep":         "🌊",
-    "heavy":        "⛓️",
-    "brooding":     "🌩️",
-
-    # Природа
-    "natural":      "🌿",
-    "earthy":       "🌍",
-    "organic":      "🍀",
-    "fresh":        "🌱",
-    "lush":         "🌴",
-    "verdant":      "🍃",
-    "floral":       "🌺",
-    "forest":       "🌲",
-    "botanical":    "🌿",
-    "ocean":        "🌊",
-    "aquatic":      "🐬",
-    "marine":       "🌊",
-    "sky":          "🌤️",
-    "airy":         "💨",
-
-    # Роскошь / элегантность
-    "luxurious":    "💎",
-    "elegant":      "👗",
-    "sophisticated":"🎩",
-    "refined":      "✨",
-    "royal":        "👑",
-    "majestic":     "🦁",
-    "opulent":      "💰",
-    "rich":         "💎",
-    "prestigious":  "🏆",
-    "glamorous":    "💫",
-    "graceful":     "🩰",
-    "classic":      "🎻",
-    "timeless":     "⌛",
-    "regal":        "👑",
-
-    # Минимализм / чистота
-    "clean":        "🧹",
-    "pure":         "🤍",
-    "minimal":      "◻️",
-    "simple":       "⬜",
-    "crisp":        "❄️",
-    "clear":        "💧",
-    "fresh":        "🌱",
-    "neutral":      "⚪",
-    "subtle":       "🌫️",
-    "understated":  "🔇",
-    "light":        "☁️",
-    "airy":         "💨",
-
-    # Романтика
-    "romantic":     "🌹",
-    "loving":       "❤️",
-    "sensual":      "🌹",
-    "intimate":     "💕",
-    "tender":       "🤍",
-    "sweet":        "🍬",
-    "charming":     "✨",
-    "dreamy":       "💭",
-    "feminine":     "🌸",
-
-    # Профессионализм / доверие
-    "trustworthy":  "🤝",
-    "reliable":     "🛡️",
-    "professional": "💼",
-    "corporate":    "🏢",
-    "authoritative":"⚖️",
-    "secure":       "🔒",
-    "dependable":   "🤝",
-    "honest":       "🤝",
-
-    # Творчество
-    "creative":     "🎨",
-    "artistic":     "🖌️",
-    "imaginative":  "💭",
-    "innovative":   "💡",
-    "unique":       "🦄",
-    "expressive":   "🎭",
-    "inspired":     "✨",
-    "spiritual":    "🕊️",
-    "mystical":     "🔮",
-    "magical":      "🪄",
-    "enchanting":   "✨",
-
-    # Прочее
-    "cool":         "😎",
-    "modern":       "🏙️",
-    "retro":        "🕹️",
-    "vintage":      "📷",
-    "industrial":   "⚙️",
-    "urban":        "🏙️",
-    "rustic":       "🏡",
-    "cozy":         "🛋️",
-    "inviting":     "🚪",
-    "welcoming":    "🤗",
-    "nurturing":    "🌱",
-    "healing":      "💚",
-    "revitalizing": "⚡",
-    "refreshing":   "💧",
-    "invigorating": "🌬️",
-    "exotic":       "🌺",
-    "tropical":     "🌴",
-    "bold":         "💪",
-    "striking":     "⚡",
-    "captivating":  "👁️",
-    "alluring":     "💫",
-    "intriguing":   "🔍",
-}
-
-FALLBACK_EMOJI = "🎨"
+    def write(self) -> None:
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write("\n".join(self.lines))
+            f.write("\n")
 
 
-def keyword_to_emoji(word: str) -> str:
-    """Возвращает эмодзи для ключевого слова (регистронезависимо)."""
-    return KEYWORD_EMOJI.get(word.lower().strip(), FALLBACK_EMOJI)
+class TranslationCache:
+    def __init__(self, path: str):
+        self.path = path
+        self.items: dict[str, str] = {}
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                self.items = json.load(f)
+
+    def get(self, source: str) -> str | None:
+        return self.items.get(source)
+
+    def set(self, source: str, translated: str) -> None:
+        self.items[source] = translated
+
+    def write(self) -> None:
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(self.items, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def parse_keywords(raw: str) -> list[str]:
@@ -270,40 +124,78 @@ def normalize_translation(value: str) -> str | None:
     return value[:1].upper() + value[1:]
 
 
-def translate_keywords_ru(
-    words: list[str],
-    folder_id: str | None,
-    api_key: str | None,
+def shorten_use_case(value: str | None) -> str | None:
+    value = re.sub(r"\s+", " ", (value or "").strip())
+    if not value:
+        return None
+    if len(value) <= USE_CASE_MAX_CHARS:
+        return value
+
+    sentence_match = re.match(r"^(.+?[.!?])\s", value)
+    if sentence_match:
+        sentence = sentence_match.group(1).strip()
+        if len(sentence) <= USE_CASE_MAX_CHARS:
+            return sentence
+
+    return value[:USE_CASE_MAX_CHARS].rsplit(" ", 1)[0].rstrip(".,;:") + "."
+
+
+def has_cyrillic(value: str | None) -> bool:
+    return bool(value and re.search(r"[А-Яа-яЁё]", value))
+
+
+def iter_translate_batches(texts: list[str]):
+    batch: list[str] = []
+    for text in texts:
+        if len(batch) >= TRANSLATE_BATCH_SIZE:
+            yield batch
+            batch = []
+
+        batch.append(text)
+
+    if batch:
+        yield batch
+
+
+def translate_texts_ru(
+    texts: list[str],
+    cache: TranslationCache | None = None,
 ) -> dict[str, str]:
-    if not words:
+    if not texts:
         return {}
-    if not folder_id or not api_key:
-        raise RuntimeError("Не заданы YANDEX_TRANSLATE_FOLDER_ID/YANDEX_TRANSLATE_API_KEY")
 
     translated: dict[str, str] = {}
-    headers = {"Authorization": f"Api-Key {api_key}"}
+    texts_to_translate: list[str] = []
+    seen: set[str] = set()
+    for text in texts:
+        if text in seen:
+            continue
+        seen.add(text)
+        cached = cache.get(text) if cache else None
+        if cached:
+            translated[text] = cached
+        else:
+            texts_to_translate.append(text)
 
-    with httpx.Client(timeout=30) as client:
-        for start in range(0, len(words), TRANSLATE_BATCH_SIZE):
-            batch = words[start:start + TRANSLATE_BATCH_SIZE]
-            response = client.post(
-                YANDEX_TRANSLATE_URL,
-                headers=headers,
-                json={
-                    "folderId": folder_id,
-                    "texts": batch,
-                    "sourceLanguageCode": "en",
-                    "targetLanguageCode": "ru",
-                },
-            )
-            response.raise_for_status()
-            payload = response.json()
-            translations = payload.get("translations", [])
+    if not texts_to_translate:
+        return translated
 
-            for source, item in zip(batch, translations):
-                text = normalize_translation(item.get("text", ""))
-                if text:
-                    translated[source] = text
+    translator = GoogleTranslator(source="en", target="ru")
+    for batch in iter_translate_batches(texts_to_translate):
+        for source in batch:
+            try:
+                value = translator.translate(source)
+            except Exception:
+                continue
+
+            text = normalize_translation(value)
+            if not text:
+                continue
+            translated[source] = text
+            if cache:
+                cache.set(source, text)
+        if cache:
+            cache.write()
 
     return translated
 
@@ -312,6 +204,9 @@ def seed():
     # Ленивый импорт — чтобы не падать если flask не настроен
     from app import app
     from models import db, Color, Emotion, EmotionColor
+    report = SeedLog(REPORT_PATH)
+    translation_cache = TranslationCache(TRANSLATION_CACHE_PATH)
+    report.section("ChromaLearn seed_colors report")
 
     if not os.path.exists(PARQUET_PATH):
         print(f"❌ Файл не найден: {PARQUET_PATH}")
@@ -333,6 +228,9 @@ def seed():
     df = pd.read_parquet(PARQUET_PATH)
     print(f"   Строк в датасете: {len(df)}")
     print(f"   Колонки: {list(df.columns)}")
+    report.add(f"Dataset: {PARQUET_PATH}")
+    report.add(f"Rows: {len(df)}")
+    report.add(f"Columns: {list(df.columns)}")
 
     with app.app_context():
 
@@ -351,6 +249,8 @@ def seed():
             row.hex: row
             for row in db.session.execute(db.select(Color)).scalars()
         }
+
+        new_colors: list[dict] = []
 
         for _, row in df.iterrows():
             raw_hex = str(row.get("HEX Code", "") or "").strip()
@@ -384,26 +284,33 @@ def seed():
             if name and len(name) > 200:
                 name = name[:200].rstrip()
 
-            use_case = str(row.get("Use Case", "") or "").strip() or None
+            use_case = shorten_use_case(str(row.get("Use Case", "") or ""))
 
-            color = Color(
-                name=name,
-                hex=hex_norm,
-                red=r,
-                green=g,
-                blue=b,
-                hue=hue,
-                saturate=sat,
-                lightness=light,
-                use_case=use_case,
-            )
-            db.session.add(color)
+            new_colors.append({
+                "name": name,
+                "hex": hex_norm,
+                "red": r,
+                "green": g,
+                "blue": b,
+                "hue": hue,
+                "saturate": sat,
+                "lightness": light,
+                "use_case": use_case,
+            })
             existing_hex.add(hex_norm)
-            hex_to_color[hex_norm] = color
             colors_added += 1
+
+        for data in new_colors:
+            color = Color(**data)
+            db.session.add(color)
+            hex_to_color[data["hex"]] = color
 
         db.session.flush()  # получаем id у новых цветов
         print(f"   ✓ Добавлено: {colors_added} | Пропущено (дубли/невалидные): {colors_skipped}")
+        report.section("Colors")
+        report.add(f"Added: {colors_added}")
+        report.add(f"Skipped duplicates/invalid: {colors_skipped}")
+        report.add("Use Case translation: skipped during main seed")
 
         # 2. Эмоции (Emotion)
         print("\n Извлекаем эмоции из Keywords...")
@@ -439,21 +346,19 @@ def seed():
             new_keywords.append((kw, name_norm))
             existing_keys.add(dedup_key)
 
-        translations = translate_keywords_ru(
+        translations = translate_texts_ru(
             [name for _, name in new_keywords],
-            app.config.get("YANDEX_TRANSLATE_FOLDER_ID"),
-            app.config.get("YANDEX_TRANSLATE_API_KEY"),
+            translation_cache,
         )
 
         emotions_translated = 0
         emotions_without_translation = 0
+        emotions_missing: list[str] = []
         for kw, name_norm in new_keywords:
-            emoji_char = keyword_to_emoji(kw)
             name_ru = translations.get(name_norm)
             emotion = Emotion(
                 name=name_norm,
                 name_ru=name_ru,
-                emoji=emoji_char,
             )
             db.session.add(emotion)
             existing_emotions[name_norm] = emotion
@@ -462,9 +367,20 @@ def seed():
                 emotions_translated += 1
             else:
                 emotions_without_translation += 1
+                emotions_missing.append(name_norm)
 
         db.session.flush()
         print(f"   ✓ Добавлено: {emotions_added} | Переведено: {emotions_translated} | Без перевода: {emotions_without_translation} | Пропущено (дубли): {emotions_skipped}")
+        report.section("Associations")
+        report.add(f"Added: {emotions_added}")
+        report.add(f"Translated: {emotions_translated}")
+        report.add(f"Without translation: {emotions_without_translation}")
+        report.add(f"Skipped duplicates/invalid: {emotions_skipped}")
+        if emotions_missing:
+            report.add("")
+            report.add("Associations without translation:")
+            for value in sorted(emotions_missing):
+                report.add(f"- {value}")
 
         # 3. EmotionColor 
         print("\n Строим связи EmotionColor...")
@@ -508,6 +424,9 @@ def seed():
 
         db.session.commit()
         print(f"   ✓ Добавлено: {links_added} | Пропущено (дубли/не найдены): {links_skipped}")
+        report.section("EmotionColor links")
+        report.add(f"Added: {links_added}")
+        report.add(f"Skipped duplicates/not found: {links_skipped}")
 
         # Итог 
         def count(model):
@@ -515,28 +434,129 @@ def seed():
                 db.select(db.func.count()).select_from(model)
             ).scalar()
 
+        color_count = count(Color)
+        emotion_count = count(Emotion)
+        emotion_color_count = count(EmotionColor)
+
         print("\n" + "═" * 50)
-        print(f"  Color        : {count(Color)}")
-        print(f"  Emotion      : {count(Emotion)}")
-        print(f"  EmotionColor : {count(EmotionColor)}")
+        print(f"  Color        : {color_count}")
+        print(f"  Emotion      : {emotion_count}")
+        print(f"  EmotionColor : {emotion_color_count}")
         print("═" * 50)
+        report.section("Totals")
+        report.add(f"Color: {color_count}")
+        report.add(f"Emotion: {emotion_count}")
+        report.add(f"EmotionColor: {emotion_color_count}")
+        report.write()
+        print(f"  Отчет        : {REPORT_PATH}")
         print("\n Готово!")
 
 
 def unseed():
     from app import app
-    from models import db, Color, Emotion, EmotionColor
+    from models import db, Color, Emotion, EmotionColor, Result, Task
 
     with app.app_context():
+        deleted_r = db.session.execute(db.delete(Result)).rowcount
+        deleted_t = db.session.execute(db.delete(Task)).rowcount
         deleted_ec = db.session.execute(db.delete(EmotionColor)).rowcount
         deleted_e  = db.session.execute(db.delete(Emotion)).rowcount
         deleted_c  = db.session.execute(db.delete(Color)).rowcount
         db.session.commit()
-        print(f"✓ Удалено: EmotionColor={deleted_ec}, Emotion={deleted_e}, Color={deleted_c}")
+        print(
+            "✓ Удалено: "
+            f"Result={deleted_r}, Task={deleted_t}, "
+            f"EmotionColor={deleted_ec}, Emotion={deleted_e}, Color={deleted_c}"
+        )
+
+
+def translate_use_cases(limit: int = 500):
+    from app import app
+    from models import db, Color
+
+    report = SeedLog(REPORT_PATH)
+    translation_cache = TranslationCache(TRANSLATION_CACHE_PATH)
+    report.section("ChromaLearn use_case translation report")
+
+    with app.app_context():
+        candidates = db.session.execute(
+            db.select(Color).where(Color.use_case.is_not(None), Color.use_case != "").order_by(Color.id)
+        ).scalars()
+
+        colors: list[Color] = []
+        source_by_color: dict[int, str] = {}
+        texts_to_translate: set[str] = set()
+        scanned = 0
+        already_ru = 0
+        empty_source = 0
+
+        for color in candidates:
+            scanned += 1
+            if has_cyrillic(color.use_case):
+                already_ru += 1
+                continue
+
+            source = shorten_use_case(color.use_case)
+            if not source:
+                empty_source += 1
+                continue
+
+            colors.append(color)
+            source_by_color[color.id] = source
+            if not translation_cache.get(source):
+                texts_to_translate.add(source)
+
+            if len(colors) >= limit:
+                break
+
+        translations = translate_texts_ru(
+            sorted(texts_to_translate),
+            translation_cache,
+        )
+
+        updated = 0
+        skipped = 0
+        missing: set[str] = set()
+        for color in colors:
+            source = source_by_color.get(color.id)
+            if not source:
+                skipped += 1
+                continue
+            translated = translation_cache.get(source) or translations.get(source)
+            if translated:
+                color.use_case = translated
+                updated += 1
+            else:
+                skipped += 1
+                missing.add(source)
+
+        db.session.commit()
+        translation_cache.write()
+
+        report.add(f"Limit: {limit}")
+        report.add(f"Scanned colors: {scanned}")
+        report.add(f"Already translated/skipped before selection: {already_ru}")
+        report.add(f"Empty source/skipped before selection: {empty_source}")
+        report.add(f"Selected untranslated colors: {len(colors)}")
+        report.add(f"Updated use_case: {updated}")
+        report.add(f"Skipped use_case: {skipped}")
+        if missing:
+            report.add("")
+            report.add("Use Case values without translation:")
+            for value in sorted(missing):
+                report.add(f"- {value}")
+        report.write()
+
+        print(f"✓ Переведено use_case: {updated} | Выбрано: {len(colors)} | Уже были на русском: {already_ru} | Пропущено: {skipped}")
+        print(f"  Отчет: {REPORT_PATH}")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "unseed":
         unseed()
+    elif len(sys.argv) > 1 and sys.argv[1] == "translate-use-cases":
+        limit = int(sys.argv[2]) if len(sys.argv) > 2 else 500
+        translate_use_cases(limit=limit)
     else:
         seed()
+

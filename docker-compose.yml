@@ -23,6 +23,12 @@ services:
     environment:
       DATABASE_URL: mysql+mysqlconnector://root:123@db:3306/chromalearn
       SECRET_KEY: supersecret
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 123
+      MYSQL_DATABASE: chromalearn
+      DATA_DUMP_PATH: /app/Chromalearn_Data_Dump.sql
 
 volumes:
   db_data:

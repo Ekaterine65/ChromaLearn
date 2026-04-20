@@ -503,6 +503,66 @@ function initCalendar() {
 
 /* Модальное окно */
 
+async function evaluateCurrentTask(taskId, modalId) {
+  try {
+    const response = await fetch(`/api/tasks/${taskId}/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        palette: palette.filter(Boolean),
+        harmony_type: window.GAME_LEVEL === 1 ? harmonyMode : null
+      })
+    });
+
+    if (!response.ok) throw new Error('Assessment request failed');
+
+    const result = await response.json();
+    updateResultModal(modalId, result);
+    showModal(modalId);
+  } catch (error) {
+    console.error(error);
+    showModal(modalId);
+  }
+}
+
+function updateResultModal(modalId, result) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  const score = modal.querySelector('[data-result-score]');
+  const scoreCircle = modal.querySelector('[data-result-score-circle]');
+  const title = modal.querySelector('[data-result-title]');
+  const sub = modal.querySelector('[data-result-sub]');
+  const breakdown = modal.querySelector('[data-result-breakdown]');
+
+  if (score) score.textContent = result.score;
+  if (scoreCircle) {
+    scoreCircle.style.borderColor = result.score_color;
+    scoreCircle.style.color = result.score_color;
+  }
+  if (title) title.textContent = result.title;
+  if (sub) sub.textContent = result.sub;
+  if (!breakdown) return;
+
+  breakdown.innerHTML = '';
+  (result.criteria || []).forEach(criterion => {
+    const row = document.createElement('div');
+    row.className = 'modal-row';
+
+    const label = document.createElement('span');
+    label.className = 'modal-row-label';
+    label.textContent = criterion.label;
+
+    const value = document.createElement('span');
+    value.className = 'modal-row-val';
+    value.style.color = criterion.color;
+    value.textContent = criterion.value;
+
+    row.append(label, value);
+    breakdown.append(row);
+  });
+}
+
 function showModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add('active');

@@ -487,7 +487,7 @@ h1,h2,h3 { font-family:'Syne',sans-serif; }
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:24px}
 .modal-overlay.active{display:flex;animation:fadeIn .3s ease both}
-.modal{background:var(--surface);border:1px solid rgba(255,255,255,.08);border-radius:26px;padding:38px;max-width:500px;width:100%;position:relative;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.modal-overlay .modal{display:block;background:var(--surface);border:1px solid rgba(255,255,255,.08);border-radius:26px;padding:38px;max-width:min(500px,calc(100vw - 48px));width:fit-content;min-width:min(420px,calc(100vw - 48px));height:auto;min-height:0;max-height:calc(100vh - 48px);inset:auto;overflow:auto;position:relative;box-shadow:0 40px 80px rgba(0,0,0,.5)}
 .modal-score-circle{width:100px;height:100px;border-radius:50%;border:3px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 22px}
 .modal-score-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800}
 .modal-score-label{font-size:10px;color:var(--muted);letter-spacing:.06em}

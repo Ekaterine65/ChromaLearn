@@ -7,7 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN apt-get update && apt-get install -y netcat-openbsd
+RUN apt-get update && apt-get install -y \
+    netcat-openbsd \
+    default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN chmod +x entrypoint.sh
 
