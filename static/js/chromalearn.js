@@ -505,10 +505,11 @@ function initCalendar() {
 
 async function evaluateCurrentTask(taskId, modalId) {
   try {
-    const response = await fetch(`/api/tasks/${taskId}/evaluate`, {
+    const response = await fetch(window.location.pathname, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        task_id: taskId,
         palette: palette.filter(Boolean),
         harmony_type: window.GAME_LEVEL === 1 ? harmonyMode : null
       })
@@ -533,34 +534,49 @@ function updateResultModal(modalId, result) {
   const scoreCircle = modal.querySelector('[data-result-score-circle]');
   const title = modal.querySelector('[data-result-title]');
   const sub = modal.querySelector('[data-result-sub]');
-  const breakdown = modal.querySelector('[data-result-breakdown]');
+  const totalColor = getScoreColor(result.total_score);
 
-  if (score) score.textContent = result.score;
+  if (score) score.textContent = result.total_score;
   if (scoreCircle) {
-    scoreCircle.style.borderColor = result.score_color;
-    scoreCircle.style.color = result.score_color;
+    scoreCircle.style.borderColor = totalColor;
+    scoreCircle.style.color = totalColor;
   }
-  if (title) title.textContent = result.title;
-  if (sub) sub.textContent = result.sub;
-  if (!breakdown) return;
+  if (title) title.textContent = result.conclusion;
+  if (sub) sub.textContent = result.summary;
 
-  breakdown.innerHTML = '';
-  (result.criteria || []).forEach(criterion => {
-    const row = document.createElement('div');
-    row.className = 'modal-row';
+  updateCriterionRow(modal, 'harmony', result.harmony_score);
+  updateCriterionRow(modal, 'emotion', result.emotion_score);
+  updateCriterionRow(modal, 'contrast', result.contrast_score, formatContrastValue(result));
+  updateCriterionRow(modal, 'colorVision', result.color_vision_score);
+}
 
-    const label = document.createElement('span');
-    label.className = 'modal-row-label';
-    label.textContent = criterion.label;
+function updateCriterionRow(modal, key, scoreValue, labelValue) {
+  const row = modal.querySelector(`[data-criterion="${key}"]`);
+  if (!row) return;
 
-    const value = document.createElement('span');
-    value.className = 'modal-row-val';
-    value.style.color = criterion.color;
-    value.textContent = criterion.value;
+  const hasScore = scoreValue !== null && scoreValue !== undefined;
+  row.style.display = hasScore ? '' : 'none';
+  if (!hasScore) return;
 
-    row.append(label, value);
-    breakdown.append(row);
-  });
+  const value = row.querySelector('[data-criterion-value]');
+  if (!value) return;
+
+  value.style.color = getScoreColor(scoreValue);
+  value.textContent = labelValue || `${scoreValue} / 100`;
+}
+
+function formatContrastValue(result) {
+  const details = result.contrast_details;
+  if (!details || details.ratio === undefined) return null;
+  const status = details.passed ? 'OK' : 'ниже AA';
+  return `${details.ratio}:1 ${status}`;
+}
+
+function getScoreColor(scoreValue) {
+  if (scoreValue >= 85) return 'var(--success)';
+  if (scoreValue >= 70) return 'var(--accent)';
+  if (scoreValue >= 50) return 'var(--accent2)';
+  return 'var(--danger)';
 }
 
 function showModal(id) {

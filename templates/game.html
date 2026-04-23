@@ -311,23 +311,33 @@
   <div class="modal">
     <button type="button" class="modal-close" onclick="hideModal('result-modal-{{ level_id }}')">✕</button>
 
-    <div class="modal-score-circle" data-result-score-circle style="border-color:{{ modal.score_color }};color:{{ modal.score_color }}">
-      <div class="modal-score-num" data-result-score>{{ modal.score }}</div>
+    <div class="modal-score-circle" data-result-score-circle style="border-color:var(--muted);color:var(--muted)">
+      <div class="modal-score-num" data-result-score>0</div>
       <div class="modal-score-label">из 100</div>
     </div>
 
-    <div class="modal-title" data-result-title>{{ modal.title }}</div>
-    <div class="modal-sub" data-result-sub>{{ modal.sub }}</div>
+    <div class="modal-title" data-result-title>Оценка решения</div>
+    <div class="modal-sub" data-result-sub>Результат будет рассчитан после отправки палитры.</div>
 
     <div class="modal-breakdown" data-result-breakdown>
-      {% for criterion in modal.criteria %}
-      {% if not ('WCAG' in criterion.label and not task.show_wcag) and not ('Дальтонизм' in criterion.label and not task.show_vision_sim) %}
-      <div class="modal-row">
-        <span class="modal-row-label">{{ criterion.label }}</span>
-        <span class="modal-row-val" style="color:{{ criterion.color }}">{{ criterion.value }}</span>
+      <div class="modal-row" data-criterion="harmony">
+        <span class="modal-row-label">Цветовая гармония</span>
+        <span class="modal-row-val" data-criterion-value>-- / 100</span>
+      </div>
+      <div class="modal-row" data-criterion="emotion">
+        <span class="modal-row-label">Эмоциональное соответствие</span>
+        <span class="modal-row-val" data-criterion-value>-- / 100</span>
+      </div>
+      {% if task.show_wcag %}
+      <div class="modal-row" data-criterion="contrast">
+        <span class="modal-row-label">Контрастность WCAG</span>
+        <span class="modal-row-val" data-criterion-value>-- / 100</span>
+      </div>
+      <div class="modal-row" data-criterion="colorVision">
+        <span class="modal-row-label">Различимость при дальтонизме</span>
+        <span class="modal-row-val" data-criterion-value>-- / 100</span>
       </div>
       {% endif %}
-      {% endfor %}
     </div>
 
     <div class="modal-actions">

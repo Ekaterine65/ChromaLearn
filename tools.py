@@ -552,7 +552,7 @@ def _build_hints_for_emotion(emotion_id: int, limit: int = 3) -> list:
 
 def task_to_game_dict(task: Task) -> dict:
     show_hints = task.level_number == 1
-    show_wcag = task.level_number >= 2
+    show_wcag = task.level_number == 3
     show_vision_sim = task.level_number == 3
     emotion = task.emotion
 
