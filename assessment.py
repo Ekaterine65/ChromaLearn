@@ -13,6 +13,8 @@ LEVEL_WEIGHTS = {
     3: {"harmony": 0.20, "emotion": 0.25, "contrast": 0.30, "color_vision": 0.25},
 }
 
+ROLE_WEIGHTS = [0.30, 0.25, 0.20, 0.10, 0.15]
+
 HARMONY_OFFSETS = {
     HarmonyType.complementary: [180.0],
     HarmonyType.analogous: [30.0],
@@ -316,19 +318,51 @@ def calculate_emotion_score(palette: list[str], emotion_id: int | None) -> dict:
 
     reference_hsl = [(c.hue, c.saturate, c.lightness) for c in reference_colors]
     similarities = []
-    for color in palette:
+    weighted_sum = 0.0
+    weights_used = []
+    weighted_matches = []
+
+    for index, color in enumerate(palette):
         color_hsl = hex_to_hsl(color)
         nearest = min(hsl_distance(color_hsl, ref) for ref in reference_hsl)
-        similarities.append(max(0.0, 1.0 - nearest / 180.0))
+        similarity = max(0.0, 1.0 - nearest / 120.0)
+        weight = ROLE_WEIGHTS[index] if index < len(ROLE_WEIGHTS) else 0.0
+        similarities.append({
+            "color": color,
+            "slot": index,
+            "weight": weight,
+            "distance": round(nearest, 2),
+            "similarity": round(similarity, 4),
+        })
+        weights_used.append(weight)
+        weighted_sum += similarity * weight
+        weighted_matches.append(similarity * weight)
 
-    score = round(sum(similarities) / len(similarities) * 100)
+    total_weight = sum(weights_used) or 1.0
+    base_score = weighted_sum / total_weight * 100
+    emotion_core_bonus = calculate_emotion_core_bonus(weighted_matches, total_weight)
+    score = clamp_score(round(base_score + emotion_core_bonus))
     return {
         "score": score,
         "details": {
             "reference_count": len(reference_colors),
             "method": "nearest_hsl_reference",
+            "role_weights": ROLE_WEIGHTS[:len(palette)],
+            "weighted": True,
+            "base_score": round(base_score, 2),
+            "emotion_core_bonus": round(emotion_core_bonus, 2),
+            "matches": similarities,
         },
     }
+
+
+def calculate_emotion_core_bonus(weighted_matches: list[float], total_weight: float) -> float:
+    if len(weighted_matches) < 2:
+        return 0.0
+
+    strongest = sorted(weighted_matches, reverse=True)[:2]
+    normalized_core = sum(strongest) / total_weight
+    return max(0.0, normalized_core - 0.35) * 18.0
 
 
 def calculate_contrast_score(palette: list[str], required_ratio: float = 4.5) -> dict:
@@ -434,9 +468,9 @@ def circular_distance(a: float, b: float) -> float:
 
 def hsl_distance(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
     hue = circular_distance(a[0], b[0]) / 180.0
-    saturation = abs(a[1] - b[1]) / 100.0
-    lightness = abs(a[2] - b[2]) / 100.0
-    return sqrt((hue * 120.0) ** 2 + (saturation * 40.0) ** 2 + (lightness * 40.0) ** 2)
+    saturation = abs(a[1] - b[1]) / 120.0
+    lightness = abs(a[2] - b[2]) / 120.0
+    return sqrt((hue * 100.0) ** 2 + (saturation * 50.0) ** 2 + (lightness * 70.0) ** 2)
 
 
 def relative_luminance(hex_color: str) -> float:
