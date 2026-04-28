@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 from flask import jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import current_user
-from assessment import process_task_submission
+from assessment import build_color_vision_preview_response, process_task_submission
 from models import db, Task
 from auth import bp as auth_bp, init_login_manager, login_required
 from admin import bp as admin_bp
@@ -55,6 +55,9 @@ def game(level_id: int):
 
     if request.method == "POST":
         payload = request.get_json(silent=True) or {}
+        if payload.get("action") == "vision_preview":
+            return jsonify(build_color_vision_preview_response(payload.get("palette") or []))
+
         task_id = payload.get("task_id") or session.get(session_key)
         task = db.session.get(Task, task_id) if task_id else None
         if not task or task.level_number != level_id:
@@ -62,7 +65,6 @@ def game(level_id: int):
         return jsonify(process_task_submission(
             task,
             payload.get("palette") or [],
-            payload.get("harmony_type"),
             current_user,
         ))
 

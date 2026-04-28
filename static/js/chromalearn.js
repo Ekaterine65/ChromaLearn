@@ -25,6 +25,9 @@ const ROLES_SHORT = ['Фон', 'Поверхн.',    'Акцент', 'Текст
 
 let palette        = ['#e4eff5', '#c5dde8', '#3d7db8', null, null];
 let activeSlotIndex = 0;
+let currentVisionMode = 'normal';
+let visionPreviewPalettes = null;
+let visionPreviewRequestId = 0;
 
 function selectPaletteSlot(i) {
   activeSlotIndex = i;
@@ -64,6 +67,10 @@ function applyColorToSlot() {
   const arbHex    = document.getElementById('arbHex');
   if (arbSwatch) arbSwatch.style.background = hex;
   if (arbHex)    arbHex.textContent = hex.toUpperCase();
+  if (window.SHOW_VISION && currentVisionMode !== 'normal') {
+    refreshVisionPreview();
+    return;
+  }
   updatePreviewSite();
 }
 
@@ -71,11 +78,12 @@ function applyColorToSlot() {
 /* Обновление макета сайта */
 
 function updatePreviewSite() {
-  const bg   = palette[0] || '#eff2f5';
-  const surf = palette[1] || '#ddeaf2';
-  const acc  = palette[2] || '#3d7db8';
-  const txtc = palette[3] || '#1b2d3e';
-  const extra = palette[4] || null;
+  const previewPalette = getPreviewPalette();
+  const bg   = previewPalette[0] || '#eff2f5';
+  const surf = previewPalette[1] || '#ddeaf2';
+  const acc  = previewPalette[2] || '#3d7db8';
+  const txtc = previewPalette[3] || '#1b2d3e';
+  const extra = previewPalette[4] || null;
 
   const lBg   = getLuminance(bg);
   const lAcc  = getLuminance(acc);
@@ -121,11 +129,20 @@ function updatePreviewSite() {
   setStyleById('siteTestimonialText2','color', mutedTxt);
   setStyleById('siteCtaText','color', onAcc);
   setStyleById('siteFooterLinks','color', mutedTxt);
+
+  updateWcagPanel();
 }
 
 function setStyleById(id, prop, val) {
   const el = document.getElementById(id);
   if (el) el.style[prop] = val;
+}
+
+function getPreviewPalette() {
+  if (currentVisionMode !== 'normal' && visionPreviewPalettes && visionPreviewPalettes[currentVisionMode]) {
+    return palette.map((color, index) => visionPreviewPalettes[currentVisionMode][index] || color);
+  }
+  return palette;
 }
 
 
@@ -365,18 +382,44 @@ const VISION_NOTES = {
   deuteranopia: 'Дейтеранопия: нарушено восприятие зелёного. Самый распространённый тип.',
   tritanopia:   'Тританопия: нарушено восприятие синего. Встречается редко.'
 };
-const VISION_FILTERS = {
-  normal: 'none', protanopia: 'url(#protanopia)',
-  deuteranopia: 'url(#deuteranopia)', tritanopia: 'url(#tritanopia)'
-};
-
-function setVisionMode(btn, type) {
+async function setVisionMode(btn, type) {
   document.querySelectorAll('.vision-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const pc=document.getElementById('panelCenter');
-  if (pc) pc.style.filter=VISION_FILTERS[type]||'none';
+  currentVisionMode = type;
   const note=document.getElementById('visionNote');
   if (note) note.textContent=VISION_NOTES[type]||'';
+
+  if (type === 'normal') {
+    updatePreviewSite();
+    return;
+  }
+
+  await refreshVisionPreview();
+}
+
+async function refreshVisionPreview() {
+  const requestId = ++visionPreviewRequestId;
+  try {
+    const response = await fetch(window.location.pathname, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'vision_preview',
+        palette: palette.filter(Boolean)
+      })
+    });
+
+    if (!response.ok) throw new Error('Vision preview request failed');
+
+    const result = await response.json();
+    if (requestId !== visionPreviewRequestId) return;
+    visionPreviewPalettes = result.palettes || null;
+    updatePreviewSite();
+  } catch (error) {
+    console.error(error);
+    visionPreviewPalettes = null;
+    updatePreviewSite();
+  }
 }
 
 
@@ -546,7 +589,7 @@ function updateResultModal(modalId, result) {
 
   updateCriterionRow(modal, 'harmony', result.harmony_score);
   updateCriterionRow(modal, 'emotion', result.emotion_score);
-  updateCriterionRow(modal, 'contrast', result.contrast_score, formatContrastValue(result));
+  updateCriterionRow(modal, 'contrast', result.contrast_score);
   updateCriterionRow(modal, 'colorVision', result.color_vision_score);
 }
 
@@ -565,18 +608,62 @@ function updateCriterionRow(modal, key, scoreValue, labelValue) {
   value.textContent = labelValue || `${scoreValue} / 100`;
 }
 
-function formatContrastValue(result) {
-  const details = result.contrast_details;
-  if (!details || details.ratio === undefined) return null;
-  const status = details.passed ? 'OK' : 'ниже AA';
-  return `${details.ratio}:1 ${status}`;
-}
-
 function getScoreColor(scoreValue) {
   if (scoreValue >= 85) return 'var(--success)';
   if (scoreValue >= 70) return 'var(--accent)';
   if (scoreValue >= 50) return 'var(--accent2)';
   return 'var(--danger)';
+}
+
+function updateWcagPanel() {
+  if (!window.SHOW_WCAG) return;
+
+  const rows = document.querySelectorAll('[data-wcag-row]');
+  if (!rows.length) return;
+
+  const text = palette[3];
+  const surfaces = [palette[0], palette[1], palette[2]];
+  const labels = ['Фон', 'Поверхность', 'Акцент'];
+
+  rows.forEach((row, index) => {
+    const main = row.querySelector('[data-wcag-main]');
+    const sub = row.querySelector('[data-wcag-sub]');
+    const dot = row.querySelector('[data-wcag-dot]');
+    const background = surfaces[index];
+
+    if (!text || !background) {
+      if (main) main.textContent = `${labels[index]} · --`;
+      if (sub) sub.textContent = 'Обычный: -- · Крупный: --';
+      if (dot) dot.className = 'wcag-dot';
+      row.classList.remove('wcag-pass', 'wcag-fail');
+      return;
+    }
+
+    const ratio = contrastRatioForPair(text, background);
+    const normalPassed = ratio >= 4.5;
+    const largePassed = ratio >= 3.0;
+    const rowPassed = normalPassed && largePassed;
+
+    row.classList.toggle('wcag-pass', rowPassed);
+    row.classList.toggle('wcag-fail', !rowPassed);
+    if (dot) {
+      dot.className = `wcag-dot ${rowPassed ? 'wcag-dot-p' : 'wcag-dot-f'}`;
+    }
+    if (main) {
+      main.textContent = `${labels[index]} · ${ratio.toFixed(2)}:1`;
+    }
+    if (sub) {
+      sub.textContent = `Обычный: ${normalPassed ? 'OK' : 'нужно 4.5'} · Крупный: ${largePassed ? 'OK' : 'нужно 3.0'}`;
+    }
+  });
+}
+
+function contrastRatioForPair(foreground, background) {
+  const l1 = getLuminance(foreground);
+  const l2 = getLuminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 function showModal(id) {

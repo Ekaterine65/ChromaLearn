@@ -14,6 +14,11 @@ LEVEL_WEIGHTS = {
 }
 
 ROLE_WEIGHTS = [0.30, 0.25, 0.20, 0.10, 0.15]
+CONTRAST_SURFACE_WEIGHTS = [0.40, 0.35, 0.25]
+NORMAL_TEXT_WEIGHT = 0.70
+LARGE_TEXT_WEIGHT = 0.30
+FAILED_NORMAL_CAP = 60
+FAILED_LARGE_CAP = 35
 
 HARMONY_OFFSETS = {
     HarmonyType.complementary: [180.0],
@@ -65,7 +70,7 @@ def calculate_solution_scores(
     }
 
 
-def process_task_submission(task: Task, palette: list, harmony_type: str | None, current_user) -> dict:
+def process_task_submission(task: Task, palette: list, current_user) -> dict:
     harmony_used = task.harmony_type
 
     scores = calculate_solution_scores(task, palette, harmony_used)
@@ -369,21 +374,74 @@ def calculate_contrast_score(palette: list[str], required_ratio: float = 4.5) ->
     if len(palette) < 4:
         return {"score": 0, "details": {"message": "Для WCAG нужны цвет фона и цвет текста."}}
 
-    background = palette[0]
     text = palette[3]
-    ratio = contrast_ratio(text, background)
-    score = round(min(ratio / required_ratio, 1.0) * 100)
-    passed = ratio >= required_ratio
+    backgrounds = palette[:3]
+    surface_names = ["background", "surface", "accent"]
+    checks = []
+    weighted_sum = 0.0
+    total_weight = sum(CONTRAST_SURFACE_WEIGHTS)
+    passed_normal_count = 0
+
+    for index, background in enumerate(backgrounds):
+        ratio = contrast_ratio(text, background)
+        normal_score = contrast_score_from_ratio(ratio, required_ratio)
+        large_score = contrast_score_from_ratio(ratio, 3.0)
+        surface_score = normal_score * NORMAL_TEXT_WEIGHT + large_score * LARGE_TEXT_WEIGHT
+        normal_passed = ratio >= required_ratio
+        large_passed = ratio >= 3.0
+
+        if not normal_passed:
+            surface_score = min(surface_score, FAILED_NORMAL_CAP)
+        if not large_passed:
+            surface_score = min(surface_score, FAILED_LARGE_CAP)
+
+        passed_normal_count += int(normal_passed)
+        weighted_sum += surface_score * CONTRAST_SURFACE_WEIGHTS[index]
+        checks.append({
+            "surface": surface_names[index],
+            "background": background,
+            "ratio": round(ratio, 2),
+            "normal_passed": normal_passed,
+            "large_passed": large_passed,
+            "normal_score": round(normal_score),
+            "large_score": round(large_score),
+            "surface_score": round(surface_score),
+        })
+
+    base_score = weighted_sum / total_weight if total_weight else 0
+    normal_pass_factor = passed_normal_count / len(checks) if checks else 0
+    score = round(base_score * (0.55 + 0.45 * normal_pass_factor))
+    passed_pairs = sum(
+        int(check["normal_passed"]) + int(check["large_passed"])
+        for check in checks
+    )
+
     return {
         "score": score,
         "details": {
             "text": text,
-            "background": background,
-            "ratio": round(ratio, 2),
-            "required_ratio": required_ratio,
-            "passed": passed,
+            "normal_required_ratio": required_ratio,
+            "large_required_ratio": 3.0,
+            "normal_weight": NORMAL_TEXT_WEIGHT,
+            "large_weight": LARGE_TEXT_WEIGHT,
+            "failed_normal_cap": FAILED_NORMAL_CAP,
+            "failed_large_cap": FAILED_LARGE_CAP,
+            "surface_weights": CONTRAST_SURFACE_WEIGHTS,
+            "base_score": round(base_score, 2),
+            "passed_normal_count": passed_normal_count,
+            "normal_pass_factor": round(normal_pass_factor, 2),
+            "checks": checks,
+            "passed_pairs": passed_pairs,
+            "total_pairs": len(checks) * 2,
         },
     }
+
+
+def contrast_score_from_ratio(ratio: float, required_ratio: float) -> float:
+    if required_ratio <= 1.0:
+        return 100.0
+    normalized = (ratio - 1.0) / (required_ratio - 1.0)
+    return max(0.0, min(100.0, normalized * 100.0))
 
 
 def calculate_color_vision_score(palette: list[str]) -> dict:
@@ -398,6 +456,18 @@ def calculate_color_vision_score(palette: list[str]) -> dict:
 
     score = round(sum(simulation_scores.values()) / len(simulation_scores))
     return {"score": score, "details": simulation_scores}
+
+
+def build_color_vision_preview_response(palette: list[str]) -> dict:
+    colors = normalize_palette(palette)
+    return {
+        "palettes": {
+            "normal": colors,
+            "protanopia": [rgb_to_hex(simulate_color_vision(color, "protanopia")) for color in colors],
+            "deuteranopia": [rgb_to_hex(simulate_color_vision(color, "deuteranopia")) for color in colors],
+            "tritanopia": [rgb_to_hex(simulate_color_vision(color, "tritanopia")) for color in colors],
+        }
+    }
 
 
 def calculate_total_score(
@@ -437,6 +507,10 @@ def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
         int(hex_color[3:5], 16),
         int(hex_color[5:7], 16),
     )
+
+
+def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+    return "#" + "".join(f"{component:02X}" for component in rgb)
 
 
 def hex_to_hsl(hex_color: str) -> tuple[float, float, float]:
@@ -493,38 +567,30 @@ def contrast_ratio(foreground: str, background: str) -> float:
 
 
 def simulate_color_vision(hex_color: str, vision_type: str) -> tuple[int, int, int]:
-    rgb_to_lms = (
-        (0.31399022, 0.63951294, 0.04649755),
-        (0.15537241, 0.75789446, 0.08670142),
-        (0.01775239, 0.10944209, 0.87256922),
-    )
-    lms_to_rgb = (
-        (5.47221206, -4.64196010, 0.16963708),
-        (-1.12524190, 2.29317094, -0.16789520),
-        (0.02980165, -0.19318073, 1.16364789),
-    )
     matrices = {
         "protanopia": (
-            (0.000000, 2.023440, -2.525810),
-            (0.000000, 1.000000, 0.000000),
-            (0.000000, 0.000000, 1.000000),
+            (0.152286, 1.052583, -0.204868),
+            (0.114503, 0.786281, 0.099216),
+            (-0.003882, -0.048116, 1.051998),
         ),
         "deuteranopia": (
-            (1.000000, 0.000000, 0.000000),
-            (0.494207, 0.000000, 1.248270),
-            (0.000000, 0.000000, 1.000000),
+            (0.367322, 0.860646, -0.227968),
+            (0.280085, 0.672501, 0.047413),
+            (-0.011820, 0.042940, 0.968881),
         ),
         "tritanopia": (
-            (1.000000, 0.000000, 0.000000),
-            (0.000000, 1.000000, 0.000000),
-            (-0.395913, 0.801109, 0.000000),
+            (1.255528, -0.076749, -0.178779),
+            (-0.078411, 0.930809, 0.147602),
+            (0.004733, 0.691367, 0.303900),
         ),
     }
 
+    matrix = matrices.get(vision_type)
+    if not matrix:
+        return hex_to_rgb(hex_color)
+
     linear_rgb = tuple(srgb_to_linear(component / 255.0) for component in hex_to_rgb(hex_color))
-    lms = multiply_matrix_vector(rgb_to_lms, linear_rgb)
-    simulated_lms = multiply_matrix_vector(matrices[vision_type], lms)
-    simulated_rgb = multiply_matrix_vector(lms_to_rgb, simulated_lms)
+    simulated_rgb = multiply_matrix_vector(matrix, linear_rgb)
     return tuple(
         max(0, min(255, round(linear_to_srgb(component) * 255.0)))
         for component in simulated_rgb
