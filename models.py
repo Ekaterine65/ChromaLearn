@@ -135,7 +135,7 @@ class Result(Base):
     __tablename__ = "results"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"))
     score_emotion: Mapped[int] = mapped_column(Integer)
     score_harmony: Mapped[int] = mapped_column(Integer)
@@ -145,7 +145,7 @@ class Result(Base):
     harmony_used: Mapped[Optional[HarmonyType]] = mapped_column(sa.Enum(HarmonyType))
     completed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    user: Mapped["User"] = relationship(back_populates="results")
+    user: Mapped[Optional["User"]] = relationship(back_populates="results")
     task: Mapped["Task"] = relationship(back_populates="results")
 
     def __repr__(self) -> str:

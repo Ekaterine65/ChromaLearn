@@ -3,48 +3,146 @@
 {% block title %}ChromaLearn — Редактирование профиля{% endblock %}
 
 {% block content %}
-<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+<section id="screen-landing" class="auth-screen cl-screen d-flex align-items-center justify-content-center position-relative">
   <div class="landing-bg"></div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
   <div class="grain"></div>
 
-  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:520px;padding:28px">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="section-title mb-0">Редактирование профиля</h1>
-      <a href="{{ url_for('profile') }}" class="btn-sm text-decoration-none">← Назад</a>
-    </div>
+  <a href="{{ back_url }}" class="btn-sm text-decoration-none position-fixed top-0 end-0 m-3" style="z-index:200">← Назад</a>
 
-    <form>
-      <div class="mb-3">
-        <label class="form-label text-muted-cl">Имя</label>
-        <input type="text" class="form-control" value="{{ profile.name }}">
+  <div class="auth-card auth-card-profile stat-card position-relative">
+    <h1 class="section-title" style="margin-bottom:16px">Редактирование профиля</h1>
+
+    <form method="POST" action="{{ url_for('profile_edit') }}" novalidate>
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="back_url" value="{{ back_url }}">
+
+      <div class="row mb-3">
+        <div class="col">
+          <label class="form-label text-muted-cl">Имя <span class="text-danger">*</span></label>
+          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), autocomplete="given-name", maxlength="40") }}
+          <div class="invalid-feedback">
+            {{ form.first_name.errors | join('. ') }}
+          </div>
+        </div>
+        <div class="col">
+          <label class="form-label text-muted-cl">Фамилия <span class="text-danger">*</span></label>
+          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), autocomplete="family-name", maxlength="40") }}
+          <div class="invalid-feedback">
+            {{ form.second_name.errors | join('. ') }}
+          </div>
+        </div>
       </div>
+
       <div class="mb-3">
-        <label class="form-label text-muted-cl">Email</label>
-        <input type="email" class="form-control" value="{{ profile.email }}">
+        <label class="form-label text-muted-cl">Логин <span class="text-danger">*</span></label>
+        {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), autocomplete="username") }}
+        <div class="invalid-feedback">
+          {{ form.login.errors | join('. ') }}
+        </div>
       </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted-cl">Email <span class="text-danger">*</span></label>
+        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), autocomplete="email") }}
+        <div class="invalid-feedback">
+          {{ form.email.errors | join('. ') }}
+        </div>
+      </div>
+
       <div class="mb-3">
         <label class="form-label text-muted-cl">Город</label>
-        <input type="text" class="form-control" value="{{ profile.city }}">
+        {{ form.city(class="form-control" + (" is-invalid" if form.city.errors else ""), autocomplete="address-level2") }}
+        <div class="invalid-feedback">
+          {{ form.city.errors | join('. ') }}
+        </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label text-muted-cl">Старый пароль</label>
-        <input type="password" class="form-control" >
+        <label class="form-label text-muted-cl">Текущий пароль</label>
+        {{ form.current_password(class="form-control" + (" is-invalid" if form.current_password.errors else ""), autocomplete="current-password") }}
+        <div class="invalid-feedback">
+          {{ form.current_password.errors | join('. ') }}
+        </div>
       </div>
+
       <div class="mb-3">
-        <label class="form-label text-muted-cl">Новый пароль</label>
-        <input type="password" class="form-control" >
+        <label class="form-label text-muted-cl">
+          Новый пароль
+        </label>
+        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="", autocomplete="new-password") }}
+        <div class="form-feedback" data-hint="От 6 сим., заглавная, строчная, цифра, спецсимвол">
+          {{ form.password.errors | join('. ') if form.password.errors else 'От 6 сим., заглавная, строчная, цифра, спецсимвол' }}
+        </div>
       </div>
+
       <div class="mb-3">
         <label class="form-label text-muted-cl">Подтвердить пароль</label>
-        <input type="password" class="form-control" >
+        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), autocomplete="new-password") }}
+        <div class="invalid-feedback">
+          {{ form.confirm_password.errors | join('. ') }}
+        </div>
       </div>
 
       <button type="submit" class="btn-full btn-full-primary">Сохранить</button>
     </form>
   </div>
 </section>
+
+<script>
+const rules = {
+  first_name:  v => v.length < 1 ? 'Поле обязательно для заполнения' : (v.length > 40 ? 'Имя должно быть не длиннее 40 символов' : ''),
+  second_name: v => v.length < 1 ? 'Поле обязательно для заполнения' : (v.length > 40 ? 'Фамилия должна быть не длиннее 40 символов' : ''),
+  login:       v => v.length < 4 ? 'Логин должен быть от 4 до 25 символов' : '',
+  email:       v => {
+    if (v.length < 1) return 'Поле обязательно для заполнения';
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Введите корректный email';
+  },
+  current_password: v => {
+    const pwd = document.querySelector('[name="password"]').value;
+    const confirm = document.querySelector('[name="confirm_password"]').value;
+    return (pwd || confirm) && !v ? 'Введите текущий пароль для смены пароля' : '';
+  },
+  password:    v => validatePassword(v),
+  confirm_password: v => {
+    const pwd = document.querySelector('[name="password"]').value;
+    return pwd && v !== pwd ? 'Пароли должны совпадать' : '';
+  },
+};
+
+function validatePassword(value) {
+  if (!value) return '';
+  if (value.length < 6) return 'Пароль должен быть не короче 6 символов';
+  if (!/[A-ZА-ЯЁ]/.test(value)) return 'Пароль должен содержать минимум 1 заглавную букву';
+  if (!/[a-zа-яё]/.test(value)) return 'Пароль должен содержать минимум 1 строчную букву';
+  if (!/\d/.test(value)) return 'Пароль должен содержать минимум 1 цифру';
+  if (!/[^A-Za-zА-Яа-яЁё0-9]/.test(value)) return 'Пароль должен содержать минимум 1 спецсимвол';
+  return '';
+}
+
+Object.keys(rules).forEach(name => {
+  const field = document.querySelector(`[name="${name}"]`);
+  if (!field) return;
+  const feedback = field.nextElementSibling;
+  const validateField = () => {
+    const error = rules[name](field.value.trim());
+    if (error) {
+      field.classList.add('is-invalid');
+      feedback.textContent = error;
+    } else {
+      field.classList.remove('is-invalid');
+      feedback.textContent = feedback.dataset.hint || '';
+    }
+  };
+  field.addEventListener('blur', validateField);
+  field.addEventListener('input', () => {
+    if (name === 'password' || name === 'confirm_password') {
+      const currentPassword = document.querySelector('[name="current_password"]');
+      if (currentPassword) currentPassword.dispatchEvent(new Event('blur'));
+    }
+  });
+});
+</script>
 {% endblock %}

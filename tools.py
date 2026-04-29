@@ -6,6 +6,24 @@ from wtforms import StringField, PasswordField, validators
 
 from models import db, Result, Task, Emotion, HarmonyType, EmotionColor, Color
 
+PERSON_NAME_MAX_LENGTH = 40
+PASSWORD_COMPLEXITY_MESSAGE = (
+    'Пароль должен содержать минимум 1 заглавную букву, '
+    '1 строчную букву, 1 цифру и 1 спецсимвол'
+)
+
+
+def validate_password_complexity(form, field) -> None:
+    password = field.data or ''
+    if not password:
+        return
+    has_upper = any(ch.isupper() for ch in password)
+    has_lower = any(ch.islower() for ch in password)
+    has_digit = any(ch.isdigit() for ch in password)
+    has_special = any(not ch.isalnum() for ch in password)
+    if not all((has_upper, has_lower, has_digit, has_special)):
+        raise validators.ValidationError(PASSWORD_COMPLEXITY_MESSAGE)
+
 
 class LoginForm(FlaskForm):
     login = StringField('Логин', [
@@ -23,11 +41,11 @@ class RegistrationForm(FlaskForm):
     ])
     first_name = StringField('Имя', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
-        validators.Length(min=1, max=100, message='Имя должно быть не длиннее 100 символов'),
+        validators.Length(min=1, max=PERSON_NAME_MAX_LENGTH, message=f'Имя должно быть не длиннее {PERSON_NAME_MAX_LENGTH} символов'),
     ])
     second_name = StringField('Фамилия', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
-        validators.Length(min=1, max=100, message='Фамилия должна быть не длиннее 100 символов'),
+        validators.Length(min=1, max=PERSON_NAME_MAX_LENGTH, message=f'Фамилия должна быть не длиннее {PERSON_NAME_MAX_LENGTH} символов'),
     ])
     email = StringField('Email', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
@@ -41,6 +59,7 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Пароль', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
         validators.Length(min=6, message='Пароль должен быть не короче 6 символов'),
+        validate_password_complexity,
     ])
     confirm_password = PasswordField('Подтвердите пароль', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
@@ -55,14 +74,14 @@ class EditProfileForm(FlaskForm):
     ])
     first_name = StringField('Имя', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
-        validators.Length(min=1, max=100, message='Имя должно быть не длиннее 100 символов'),
+        validators.Length(min=1, max=PERSON_NAME_MAX_LENGTH, message=f'Имя должно быть не длиннее {PERSON_NAME_MAX_LENGTH} символов'),
     ])
     second_name = StringField('Фамилия', [
         validators.DataRequired(message='Поле обязательно для заполнения'),
-        validators.Length(min=1, max=100, message='Фамилия должна быть не длиннее 100 символов'),
+        validators.Length(min=1, max=PERSON_NAME_MAX_LENGTH, message=f'Фамилия должна быть не длиннее {PERSON_NAME_MAX_LENGTH} символов'),
     ])
     email = StringField('Email', [
-        validators.Optional(),
+        validators.DataRequired(message='Поле обязательно для заполнения'),
         validators.Email(message='Введите корректный email'),
         validators.Length(max=200),
     ])
@@ -70,12 +89,18 @@ class EditProfileForm(FlaskForm):
         validators.Optional(),
         validators.Length(max=100, message='Название города должно быть не длиннее 100 символов'),
     ])
+    current_password = PasswordField('Текущий пароль', [
+        validators.Optional(),
+    ])
     password = PasswordField('Новый пароль', [
         validators.Optional(),
-        validators.EqualTo('confirm_password', message='Пароли должны совпадать'),
         validators.Length(min=6, message='Пароль должен быть не короче 6 символов'),
+        validate_password_complexity,
     ])
-    confirm_password = PasswordField('Подтвердите новый пароль')
+    confirm_password = PasswordField('Подтвердите новый пароль', [
+        validators.Optional(),
+        validators.EqualTo('password', message='Пароли должны совпадать'),
+    ])
 
     def validate_confirm_password(self, field):
         if self.password.data and not field.data:

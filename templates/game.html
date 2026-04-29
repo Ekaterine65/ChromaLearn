@@ -20,6 +20,7 @@
 {# Передаём данные уровня в JS через data-атрибуты #}
 <script>
   window.GAME_LEVEL    = {{ level_id }};
+  window.TASK_ID       = {{ task.id }};
   window.SHOW_WCAG     = {{ 'true' if task.show_wcag else 'false' }};
   window.SHOW_VISION   = {{ 'true' if task.show_vision_sim else 'false' }};
 </script>
@@ -42,11 +43,11 @@
     <div class="pslot-role">Акцент</div>
   </div>
   <div class="pslot" id="ps3" onclick="selectPaletteSlot(3)">
-    <div class="pslot-swatch" id="ps3s">+</div>
+    <div class="pslot-swatch filled" id="ps3s" style="background:#1b2d3e"><div class="del-overlay">x</div></div>
     <div class="pslot-role">Текст</div>
   </div>
   <div class="pslot" id="ps4" onclick="selectPaletteSlot(4)">
-    <div class="pslot-swatch" id="ps4s">+</div>
+    <div class="pslot-swatch filled" id="ps4s" style="background:#7a8fa3"><div class="del-overlay">x</div></div>
     <div class="pslot-role">Доп.</div>
   </div>
 </div>
@@ -116,7 +117,7 @@
       </div>
 
       {# Hints lv1 #}
-      {% if task.show_hints %}
+      {% if task.show_hints and task.hints %}
       <div class="panel-section">
         <div class="panel-label">Подсказки — психология цвета</div>
         {% for hint in task.hints %}
@@ -131,7 +132,7 @@
       </div>
 
       {# Locked hints lv2,3 #}
-      {% else %}
+      {% elif false %}
       <div class="panel-section">
         <div class="panel-label" style="color:rgba(200,180,255,.35)">Подсказки</div>
         <div class="text-center p-3 rounded-3"
@@ -167,8 +168,7 @@
     <main class="panel-center" id="panelCenter" style="position:relative">
 
     {# Список доступных файлов #}
-    {% set sites = ['aelius.html', 'shop.html', 'media-blog.html'] %}
-    {% set random_site = sites|random %}
+    {% set random_site = selected_site %}
     
     {% include 'sites/' + random_site %}
     </main>
@@ -192,12 +192,6 @@
           <div class="wheel-container">
             <canvas id="colorWheel" width="200" height="200"></canvas>
             <canvas id="harmonyCanvas" width="200" height="200"></canvas>
-            <div class="wheel-center-info">
-              <div class="wheel-center-circle">
-                <div class="wcc-color" id="centerColor"></div>
-                <div class="wcc-hex" id="centerHex"></div>
-              </div>
-            </div>
           </div>
           <div class="brightness-track">
             <div class="brightness-label">Яркость</div>

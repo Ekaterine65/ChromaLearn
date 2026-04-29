@@ -3,36 +3,39 @@
 {% block title %}ChromaLearn — Регистрация{% endblock %}
 
 {% block content %}
-<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+<section id="screen-landing" class="auth-screen cl-screen d-flex align-items-center justify-content-center position-relative">
   <div class="landing-bg"></div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
   <div class="grain"></div>
 
-  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:460px;padding:28px">
+  <a href="{{ back_url }}" class="btn-sm text-decoration-none position-fixed top-0 end-0 m-3" style="z-index:200">← Назад</a>
+
+  <div class="auth-card auth-card-register stat-card position-relative">
     <h1 class="section-title" style="margin-bottom:16px">Регистрация</h1>
 
     <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
       {{ form.hidden_tag() }}
+      <input type="hidden" name="back_url" value="{{ back_url }}">
 
       <div class="row mb-3">
         <div class="col">
           <label class="form-label text-muted-cl">
             Имя <span class="text-danger">*</span>
           </label>
-          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Иван", autocomplete="given-name") }}
+          {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Иван", autocomplete="given-name", maxlength="40") }}
           <div class="invalid-feedback">
-            {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+            {{ form.first_name.errors | join('. ') }}
           </div>
         </div>
         <div class="col">
           <label class="form-label text-muted-cl">
             Фамилия <span class="text-danger">*</span>
           </label>
-          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), placeholder="Иванов", autocomplete="family-name") }}
+          {{ form.second_name(class="form-control" + (" is-invalid" if form.second_name.errors else ""), placeholder="Иванов", autocomplete="family-name", maxlength="40") }}
           <div class="invalid-feedback">
-            {% for error in form.second_name.errors %}{{ error }}{% endfor %}
+            {{ form.second_name.errors | join('. ') }}
           </div>
         </div>
       </div>
@@ -43,7 +46,7 @@
         </label>
         {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Придумайте логин", autocomplete="username") }}
         <div class="invalid-feedback">
-          {% for error in form.login.errors %}{{ error }}{% endfor %}
+          {{ form.login.errors | join('. ') }}
         </div>
       </div>
 
@@ -53,7 +56,7 @@
         </label>
         {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@email.com", autocomplete="email") }}
         <div class="invalid-feedback">
-          {% for error in form.email.errors %}{{ error }}{% endfor %}
+          {{ form.email.errors | join('. ') }}
         </div>
       </div>
 
@@ -61,7 +64,7 @@
         <label class="form-label text-muted-cl">Город</label>
         {{ form.city(class="form-control" + (" is-invalid" if form.city.errors else ""), placeholder="Москва", autocomplete="address-level2") }}
         <div class="invalid-feedback">
-          {% for error in form.city.errors %}{{ error }}{% endfor %}
+          {{ form.city.errors | join('. ') }}
         </div>
       </div>
 
@@ -69,9 +72,9 @@
         <label class="form-label text-muted-cl">
           Пароль <span class="text-danger">*</span>
         </label>
-        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Минимум 6 символов", autocomplete="new-password") }}
-        <div class="invalid-feedback">
-          {% for error in form.password.errors %}{{ error }}{% endfor %}
+        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="", autocomplete="new-password") }}
+        <div class="form-feedback" data-hint="От 6 сим., заглавная, строчная, цифра, спецсимвол">
+          {{ form.password.errors | join('. ') if form.password.errors else 'От 6 сим., заглавная, строчная, цифра, спецсимвол' }}
         </div>
       </div>
 
@@ -81,7 +84,7 @@
         </label>
         {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Повторите пароль", autocomplete="new-password") }}
         <div class="invalid-feedback">
-          {% for error in form.confirm_password.errors %}{{ error }}{% endfor %}
+          {{ form.confirm_password.errors | join('. ') }}
         </div>
       </div>
 
@@ -89,26 +92,36 @@
     </form>
 
     <div class="small text-muted-cl mt-3">
-      Уже есть аккаунт? <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Войти</a>
+      Уже есть аккаунт? <a href="{{ url_for('auth.login', back_url=back_url) }}" class="text-decoration-none">Войти</a>
     </div>
   </div>
 </section>
 
 <script>
 const rules = {
-  first_name:       v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
-  second_name:      v => v.length < 1 ? 'Поле обязательно для заполнения' : '',
+  first_name:       v => v.length < 1 ? 'Поле обязательно для заполнения' : (v.length > 40 ? 'Имя должно быть не длиннее 40 символов' : ''),
+  second_name:      v => v.length < 1 ? 'Поле обязательно для заполнения' : (v.length > 40 ? 'Фамилия должна быть не длиннее 40 символов' : ''),
   login:            v => v.length < 4 ? 'Логин должен быть от 4 до 25 символов' : '',
   email:            v => {
     if (v.length < 1) return 'Поле обязательно для заполнения';
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Введите корректный email';
   },
-  password:         v => v.length < 6 ? 'Пароль должен быть не короче 6 символов' : '',
+  password:         v => validatePassword(v, true),
   confirm_password: v => {
     const pwd = document.querySelector('[name="password"]').value;
     return v !== pwd ? 'Пароли должны совпадать' : '';
   },
 };
+
+function validatePassword(value, required = false) {
+  if (!value) return required ? 'Поле обязательно для заполнения' : '';
+  if (value.length < 6) return 'Пароль должен быть не короче 6 символов';
+  if (!/[A-ZА-ЯЁ]/.test(value)) return 'Пароль должен содержать минимум 1 заглавную букву';
+  if (!/[a-zа-яё]/.test(value)) return 'Пароль должен содержать минимум 1 строчную букву';
+  if (!/\d/.test(value)) return 'Пароль должен содержать минимум 1 цифру';
+  if (!/[^A-Za-zА-Яа-яЁё0-9]/.test(value)) return 'Пароль должен содержать минимум 1 спецсимвол';
+  return '';
+}
 
 Object.keys(rules).forEach(name => {
   const field = document.querySelector(`[name="${name}"]`);
@@ -121,7 +134,7 @@ Object.keys(rules).forEach(name => {
       feedback.textContent = error;
     } else {
       field.classList.remove('is-invalid');
-      feedback.textContent = '';
+      feedback.textContent = feedback.dataset.hint || '';
     }
   });
 });

@@ -23,11 +23,60 @@
 const ROLES       = ['Фон', 'Поверхность', 'Акцент', 'Текст', 'Доп.'];
 const ROLES_SHORT = ['Фон', 'Поверхн.',    'Акцент', 'Текст', 'Доп.'];
 
-let palette        = ['#e4eff5', '#c5dde8', '#3d7db8', null, null];
+const DEFAULT_PALETTE = ['#e4eff5', '#c5dde8', '#3d7db8', '#1b2d3e', '#7a8fa3'];
+
+let palette        = [...DEFAULT_PALETTE];
 let activeSlotIndex = 0;
 let currentVisionMode = 'normal';
 let visionPreviewPalettes = null;
 let visionPreviewRequestId = 0;
+
+function getPaletteStorageKey() {
+  if (!window.GAME_LEVEL || !window.TASK_ID) return null;
+  return `chromalearn.palette.level.${window.GAME_LEVEL}.task.${window.TASK_ID}`;
+}
+
+function isValidPaletteColor(color) {
+  return color === null || /^#[0-9a-fA-F]{6}$/.test(color);
+}
+
+function savePaletteState() {
+  const key = getPaletteStorageKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(palette));
+  } catch (error) {
+    console.warn('Palette state was not saved', error);
+  }
+}
+
+function restorePaletteState() {
+  const key = getPaletteStorageKey();
+  if (!key) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!Array.isArray(stored)) return;
+    const nextPalette = DEFAULT_PALETTE.map((fallback, index) => {
+      const color = stored[index];
+      return color && isValidPaletteColor(color) ? color : fallback;
+    });
+    palette = nextPalette;
+    refreshPaletteSlots();
+  } catch (error) {
+    console.warn('Palette state was not restored', error);
+  }
+}
+
+function refreshPaletteSlots() {
+  for (let index = 0; index < 5; index++) {
+    const swatch = document.getElementById('ps' + index + 's');
+    if (!swatch) continue;
+    const color = palette[index];
+    swatch.classList.toggle('filled', Boolean(color));
+    swatch.style.background = color || '';
+    swatch.innerHTML = color ? '<div class="del-overlay">x</div>' : '+';
+  }
+}
 
 function selectPaletteSlot(i) {
   activeSlotIndex = i;
@@ -56,6 +105,8 @@ function selectPaletteSlot(i) {
 function applyColorToSlot() {
   const hex = hslToHex(currentHue, currentSat, currentLight);
   palette[activeSlotIndex] = hex;
+  savePaletteState();
+  refreshPaletteSlots();
   const sw = document.getElementById('ps' + activeSlotIndex + 's');
   if (sw) {
     sw.style.background = hex;
@@ -303,10 +354,6 @@ function updateColorUI() {
   const hex = hslToHex(currentHue, currentSat, currentLight);
   const [rr,gg,bb] = hslToRgb(currentHue, currentSat, currentLight);
 
-  const cc=document.getElementById('centerColor'), ch=document.getElementById('centerHex');
-  if (cc) cc.style.background=hex;
-  if (ch) ch.textContent=hex;
-
   const fHex=document.getElementById('fHex'), fR=document.getElementById('fR');
   const fG=document.getElementById('fG'),     fB=document.getElementById('fB');
   if (fHex && document.activeElement!==fHex) fHex.value=hex;
@@ -332,6 +379,10 @@ function updateColorUI() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  restorePaletteState();
+  selectPaletteSlot(activeSlotIndex);
+  updatePreviewSite();
+
   const { canvas } = getWheelCanvases();
   if (canvas) {
     canvas.addEventListener('click', e => {

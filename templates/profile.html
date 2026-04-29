@@ -9,6 +9,7 @@
   <header class="profile-header d-flex align-items-center justify-content-between">
     <a href="{{ url_for('landing') }}" class="logo text-decoration-none">Chroma<span>Learn</span></a>
     <div class="d-flex align-items-center gap-3">
+      <a href="{{ url_for('auth.logout') }}" class="btn-sm text-decoration-none">Выйти</a>
       <a href="javascript:history.back()" class="back-btn text-decoration-none">← Назад</a>
     </div>
   </header>
@@ -16,8 +17,8 @@
   <div class="profile-body mx-auto" style="max-width:1100px;padding:48px 24px 80px">
 
     {# Hero card #}
-    <div class="profile-hero row align-items-center g-4 mb-5">
-      <div class="col-auto">
+    <div class="profile-hero mb-5">
+      <div class="profile-hero-avatar">
         <div class="profile-avatar">
           {% if current_user.is_authenticated %}
             {{ current_user.first_name[0] }}{{ current_user.second_name[0] }}
@@ -26,7 +27,7 @@
           {% endif %}
         </div>
       </div>
-      <div class="col">
+      <div class="profile-hero-main">
         <div class="profile-name">{{ profile.name }}</div>
         <div class="profile-meta d-flex flex-wrap align-items-center gap-2 gap-md-3 mt-1">
           <span>{{ profile.email }}</span>
@@ -39,7 +40,7 @@
           <span class="profile-level-badge">{{ profile.level_badge }}</span>
         </div>
       </div>
-      <div class="col-auto">
+      <div class="profile-hero-actions">
         <a href="{{ url_for('profile_edit') }}" class="back-btn text-decoration-none">Редактировать</a>
       </div>
     </div>

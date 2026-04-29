@@ -101,11 +101,8 @@ def process_task_submission(task: Task, palette: list, current_user) -> dict:
 
 
 def store_task_result(task: Task, scores: dict, harmony_used: HarmonyType | None, current_user) -> bool:
-    if not current_user.is_authenticated:
-        return False
-
     result = Result(
-        user_id=current_user.id,
+        user_id=current_user.id if current_user.is_authenticated else None,
         task_id=task.id,
         score_emotion=scores["emotion"]["score"],
         score_harmony=scores["harmony"]["score"],

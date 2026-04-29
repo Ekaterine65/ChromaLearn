@@ -3,18 +3,22 @@
 {% block title %}ChromaLearn — Вход{% endblock %}
 
 {% block content %}
-<section id="screen-landing" class="cl-screen d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height:100vh">
+<section id="screen-landing" class="auth-screen cl-screen d-flex align-items-center justify-content-center position-relative">
   <div class="landing-bg"></div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
   <div class="grain"></div>
 
-  <div class="stat-card position-relative" style="z-index:2;width:100%;max-width:420px;padding:28px">
+  <a href="{{ back_url }}" class="btn-sm text-decoration-none position-fixed top-0 end-0 m-3" style="z-index:200">← Назад</a>
+
+  <div class="auth-card auth-card-login stat-card position-relative">
     <h1 class="section-title" style="margin-bottom:16px">Вход</h1>
 
     <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
       {{ form.hidden_tag() }}
+      <input type="hidden" name="back_url" value="{{ back_url }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
 
       <div class="mb-3">
         <label class="form-label text-muted-cl">
@@ -22,7 +26,7 @@
         </label>
         {{ form.login(class="form-control" + (" is-invalid" if form.login.errors else ""), placeholder="Введите логин") }}
         <div class="invalid-feedback">
-          {% for error in form.login.errors %}{{ error }}{% endfor %}
+          {{ form.login.errors | join('. ') }}
         </div>
       </div>
 
@@ -32,7 +36,7 @@
         </label>
         {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Введите пароль") }}
         <div class="invalid-feedback">
-          {% for error in form.password.errors %}{{ error }}{% endfor %}
+          {{ form.password.errors | join('. ') }}
         </div>
       </div>
 
@@ -40,7 +44,7 @@
     </form>
 
     <div class="small text-muted-cl mt-3">
-      Нет аккаунта? <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Регистрация</a>
+      Нет аккаунта? <a href="{{ url_for('auth.register', back_url=back_url) }}" class="text-decoration-none">Регистрация</a>
     </div>
   </div>
 </section>
