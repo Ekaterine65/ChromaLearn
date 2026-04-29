@@ -34,6 +34,25 @@ HARMONY_MIN_CORE_COLORS = {
     HarmonyType.triadic: 3,
 }
 
+HARMONY_LABELS = {
+    HarmonyType.monochromatic.value: "монохромная",
+    HarmonyType.analogous.value: "аналоговая",
+    HarmonyType.complementary.value: "комплементарная",
+    HarmonyType.triadic.value: "триадная",
+}
+
+ROLE_LABELS = ["фон", "поверхность", "акцент", "текст", "дополнительный цвет"]
+SURFACE_LABELS = {
+    "background": "фоне",
+    "surface": "поверхности",
+    "accent": "акценте",
+}
+VISION_LABELS = {
+    "protanopia": "протанопии",
+    "deuteranopia": "дейтеранопии",
+    "tritanopia": "тританопии",
+}
+
 def calculate_solution_scores(
     task: Task,
     palette: Iterable[str],
@@ -88,6 +107,7 @@ def process_task_submission(task: Task, palette: list, current_user) -> dict:
         "total_score": scores["total_score"],
         "conclusion": meta["conclusion"],
         "summary": meta["summary"],
+        "feedback": build_result_feedback(scores),
         "weights": scores["weights"],
         "harmony_score": scores["harmony"]["score"],
         "harmony_details": scores["harmony"]["details"],
@@ -654,3 +674,101 @@ def build_result_meta(total_score: int) -> dict:
         "conclusion": "Необходимо повторить",
         "summary": "Палитру стоит пересобрать с учетом гармонии, эмоции и доступности.",
     }
+def build_result_feedback(scores: dict) -> list[str]:
+    feedback = []
+    feedback.extend(build_harmony_feedback(scores["harmony"]))
+    feedback.extend(build_emotion_feedback(scores["emotion"]))
+    if scores["contrast"]:
+        feedback.extend(build_contrast_feedback(scores["contrast"]))
+    if scores["color_vision"]:
+        feedback.extend(build_color_vision_feedback(scores["color_vision"]))
+    return feedback
+
+
+def build_harmony_feedback(harmony: dict) -> list[str]:
+    details = harmony.get("details") or {}
+    if harmony.get("score", 0) >= 85:
+        return []
+
+    if details.get("message"):
+        return [details["message"]]
+
+    feedback = []
+    harmony_type = details.get("harmony_type")
+    harmony_label = HARMONY_LABELS.get(harmony_type, harmony_type or "выбранная")
+    core_count = details.get("core_count")
+    required_core_count = details.get("required_core_count")
+    if isinstance(core_count, int) and isinstance(required_core_count, int) and core_count < required_core_count:
+        missing = required_core_count - core_count
+        feedback.append(f"Для схемы «{harmony_label}» не хватает ещё {missing} опорного цвета в нужном угле Hue.")
+
+    checked = details.get("checked") or []
+    failed_colors = [item["color"] for item in checked if not item.get("matched")]
+    if failed_colors:
+        preview = ", ".join(failed_colors[:2])
+        suffix = " и ещё другие." if len(failed_colors) > 2 else "."
+        feedback.append(f"Часть цветов выходит за допуск гармонии по Hue: {preview}{suffix}")
+
+    return feedback
+
+
+def build_emotion_feedback(emotion: dict) -> list[str]:
+    details = emotion.get("details") or {}
+    if emotion.get("score", 0) >= 85:
+        return []
+
+    if details.get("message"):
+        return [details["message"]]
+
+    feedback = []
+    matches = details.get("matches") or []
+    weak_roles = [
+        ROLE_LABELS[item["slot"]]
+        for item in matches
+        if item.get("slot", -1) < len(ROLE_LABELS)
+        and item.get("weight", 0) > 0
+        and item.get("similarity", 0) < 0.45
+    ]
+    if weak_roles:
+        feedback.append(f"Эмоцию хуже всего поддерживают цвета в ролях: {', '.join(weak_roles[:3])}.")
+
+    if details.get("emotion_core_bonus", 0) < 3:
+        feedback.append("В палитре не хватает двух сильных цветовых опор, которые уверенно передают нужную эмоцию.")
+
+    return feedback
+
+
+def build_contrast_feedback(contrast: dict) -> list[str]:
+    details = contrast.get("details") or {}
+    checks = details.get("checks") or []
+    feedback = []
+
+    for check in checks:
+        surface_label = SURFACE_LABELS.get(check.get("surface"), check.get("surface", "поверхности"))
+        ratio = check.get("ratio", 0)
+        normal_passed = check.get("normal_passed")
+        large_passed = check.get("large_passed")
+
+        if not normal_passed and not large_passed:
+            feedback.append(
+                f"Контраст на {surface_label} не проходит ни для обычного, ни для крупного текста ({ratio}:1)."
+            )
+        elif not normal_passed:
+            feedback.append(
+                f"Контраст на {surface_label} проходит только для крупного текста; для обычного текста нужен минимум 4.5:1 (сейчас {ratio}:1)."
+            )
+
+    return feedback
+
+
+def build_color_vision_feedback(color_vision: dict) -> list[str]:
+    details = color_vision.get("details") or {}
+    if not details:
+        return []
+
+    weakest_type, weakest_score = min(details.items(), key=lambda item: item[1])
+    if weakest_score >= 85:
+        return []
+
+    vision_label = VISION_LABELS.get(weakest_type, weakest_type)
+    return [f"При симуляции {vision_label} цвета различаются слабо; стоит сильнее развести оттенки или светлоту."]

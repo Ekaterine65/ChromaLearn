@@ -1,65 +1,184 @@
-﻿<nav class="site-nav" id="siteNav">
+<nav class="site-nav" id="siteNav">
   <div class="site-nav-logo" id="siteNavLogo">Aelius</div>
   <div class="site-nav-links" id="siteNavLinks">
-    <span>Продукт</span><span>Решения</span><span>Цены</span><span>О нас</span>
+    <span>Studio</span><span>Audit</span><span>Tokens</span><span>Pricing</span>
   </div>
-  <button class="site-nav-cta" id="siteNavCta">Попробовать</button>
+  <button class="site-nav-cta" id="siteNavCta">Запустить аудит</button>
 </nav>
 
-<div class="site-hero" id="siteHero">
-  <div class="site-hero-tag" id="siteHeroTag">✦ Новый подход к дизайну</div>
-  <h1 class="site-hero-title" id="siteHeroTitle">Создавайте интерфейсы,<br>которые работают</h1>
-  <p class="site-hero-sub" id="siteHeroSub">
-    Инструмент для дизайнеров, которые ценят точность, красоту и доступность одновременно.
-  </p>
-  <div class="site-hero-btns d-flex gap-3">
-    <button class="site-btn-primary" id="siteHeroBtnPrimary">Начать бесплатно</button>
-    <button class="site-btn-secondary" id="siteHeroBtnSecondary">Смотреть демо →</button>
-  </div>
-</div>
-
-<div class="site-features" id="siteFeatures">
-  <div class="site-feat" id="siteFeature1">
-    <div class="site-feat-icon">⚡</div>
-    <div class="site-feat-title">Скорость</div>
-    <div class="site-feat-text" id="siteFeatureText1">Создавайте прототипы в 10 раз быстрее с интеллектуальными инструментами.</div>
-  </div>
-  <div class="site-feat" id="siteFeature2">
-    <div class="site-feat-icon">🎨</div>
-    <div class="site-feat-title">Цвет</div>
-    <div class="site-feat-text" id="siteFeatureText2">Автоматическое построение гармоничных палитр с учётом WCAG.</div>
-  </div>
-  <div class="site-feat" id="siteFeature3">
-    <div class="site-feat-icon">♿</div>
-    <div class="site-feat-title">Доступность</div>
-    <div class="site-feat-text" id="siteFeatureText3">Симуляция нарушений зрения прямо в рабочем процессе.</div>
-  </div>
-</div>
-
-<div class="site-testimonials" id="siteTestimonials">
-  <div class="site-section-title">Что говорят дизайнеры</div>
-  <div class="site-content-grid">
-    <div class="site-content-card" id="siteTestimonialCard1">
-      <div class="site-content-text" id="siteTestimonialText1">«Наконец-то инструмент, который понимает разницу между красивым и доступным дизайном.»</div>
-      <div class="site-content-meta" id="siteTestimonialAuthor1">— Анна К., Product Designer</div>
-    </div>
-    <div class="site-content-card" id="siteTestimonialCard2">
-      <div class="site-content-text" id="siteTestimonialText2">«Сэкономил недели работы по проверке контрастности. Рекомендую всем командам.»</div>
-      <div class="site-content-meta" id="siteTestimonialAuthor2">— Михаил С., UX Lead</div>
+<section class="site-saas-hero" id="siteHero">
+  <div class="site-saas-copy">
+    <div class="site-hero-tag" id="siteHeroTag">Design ops platform</div>
+    <h1 class="site-hero-title" id="siteHeroTitle">Контроль цвета для продуктовых команд</h1>
+    <p class="site-hero-sub" id="siteHeroSub">
+      Aelius находит слабый контраст, спорные акценты и несогласованные токены до релиза.
+    </p>
+    <div class="site-hero-btns">
+      <button class="site-btn-primary" id="siteHeroBtnPrimary">Проверить экран</button>
+      <button class="site-btn-secondary" id="siteHeroBtnSecondary">Смотреть отчет</button>
     </div>
   </div>
-</div>
+
+  <div class="site-dashboard-preview">
+    <div class="site-dashboard-top">
+      <div>
+        <div class="site-dashboard-eyebrow">Live audit</div>
+        <strong>Checkout flow</strong>
+      </div>
+      <span>82%</span>
+    </div>
+    <div class="site-dashboard-chart">
+      <span style="height:42%"></span>
+      <span style="height:68%"></span>
+      <span style="height:54%"></span>
+      <span style="height:82%"></span>
+      <span style="height:61%"></span>
+    </div>
+    <div class="site-dashboard-alert">
+      <span></span>
+      <div>
+        <strong>CTA contrast</strong>
+        <small>Нужна проверка на surface</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="site-saas-kpis" id="siteFeatures">
+  <div class="site-kpi-card">
+    <span>Контраст</span>
+    <strong>AA</strong>
+    <small>13 экранов прошли проверку</small>
+  </div>
+  <div class="site-kpi-card site-kpi-card-accent">
+    <span>Ошибки</span>
+    <strong>7</strong>
+    <small>3 критичных до релиза</small>
+  </div>
+  <div class="site-kpi-card">
+    <span>Токены</span>
+    <strong>42</strong>
+    <small>5 требуют переименования</small>
+  </div>
+  <div class="site-kpi-card">
+    <span>Темы</span>
+    <strong>3</strong>
+    <small>Light, Dark, High contrast</small>
+  </div>
+</section>
+
+<section class="site-section" id="siteTestimonials">
+  <div class="site-section-title">Рабочая панель</div>
+  <div class="site-workbench">
+    <aside class="site-workbench-sidebar">
+      <div class="site-workbench-tab site-workbench-tab-active">Overview</div>
+      <div class="site-workbench-tab">Tokens</div>
+      <div class="site-workbench-tab">Contrast</div>
+      <div class="site-workbench-tab">Components</div>
+    </aside>
+    <div class="site-workbench-main">
+      <div class="site-token-row">
+        <span class="site-token-swatch site-token-bg"></span>
+        <div>
+          <strong>background/base</strong>
+          <small>Основной фон продукта</small>
+        </div>
+        <em>ok</em>
+      </div>
+      <div class="site-token-row">
+        <span class="site-token-swatch site-token-surface"></span>
+        <div>
+          <strong>surface/card</strong>
+          <small>Карточки, панели, формы</small>
+        </div>
+        <em>ok</em>
+      </div>
+      <div class="site-token-row site-token-row-warning">
+        <span class="site-token-swatch site-token-accent"></span>
+        <div>
+          <strong>accent/action</strong>
+          <small>Primary CTA и активные состояния</small>
+        </div>
+        <em>review</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="site-section">
+  <div class="site-section-title">Пайплайн проверки</div>
+  <div class="site-pipeline">
+    <article>
+      <span>1</span>
+      <h3>Импорт</h3>
+      <p>Загрузите Figma tokens или CSS variables.</p>
+    </article>
+    <article>
+      <span>2</span>
+      <h3>Аудит</h3>
+      <p>Проверьте контраст, роли и состояние компонентов.</p>
+    </article>
+    <article>
+      <span>3</span>
+      <h3>Отчет</h3>
+      <p>Получите список правок для дизайна и фронтенда.</p>
+    </article>
+  </div>
+</section>
+
+<section class="site-section">
+  <div class="site-section-title">Матрица компонентов</div>
+  <div class="site-component-matrix">
+    <div class="site-matrix-head">Компонент</div>
+    <div class="site-matrix-head">Фон</div>
+    <div class="site-matrix-head">Surface</div>
+    <div class="site-matrix-head">Accent</div>
+    <div>Button / Primary</div>
+    <div class="site-matrix-pass">pass</div>
+    <div class="site-matrix-pass">pass</div>
+    <div class="site-matrix-warn">review</div>
+    <div>Card / Product</div>
+    <div class="site-matrix-pass">pass</div>
+    <div class="site-matrix-pass">pass</div>
+    <div class="site-matrix-pass">pass</div>
+    <div>Input / Error</div>
+    <div class="site-matrix-pass">pass</div>
+    <div class="site-matrix-warn">review</div>
+    <div class="site-matrix-pass">pass</div>
+  </div>
+</section>
+
+<section class="site-section">
+  <div class="site-section-title">Тарифы</div>
+  <div class="site-pricing-grid">
+    <article class="site-price-card">
+      <div class="site-pill">Team</div>
+      <strong>19 000 ₽</strong>
+      <span>до 5 проектов</span>
+      <button class="site-price-button">Выбрать</button>
+    </article>
+    <article class="site-price-card site-price-card-featured">
+      <div class="site-pill">Product</div>
+      <strong>39 000 ₽</strong>
+      <span>аудит, темы и экспорт токенов</span>
+      <button class="site-price-button">Выбрать</button>
+    </article>
+    <article class="site-price-card">
+      <div class="site-pill">Enterprise</div>
+      <strong>Custom</strong>
+      <span>SSO, роли, приватные правила</span>
+      <button class="site-price-button">Связаться</button>
+    </article>
+  </div>
+</section>
 
 <div class="site-cta-banner" id="siteCtaBanner">
-  <h3 id="siteCtaTitle">Готовы начать?</h3>
-  <p id="siteCtaText">Присоединяйтесь к 12 000+ дизайнеров, которые уже используют ChromaLearn.</p>
-  <button class="site-btn-primary" id="siteCtaButton">Попробовать бесплатно</button>
+  <h3 id="siteCtaTitle">Проверьте палитру перед релизом</h3>
+  <p id="siteCtaText">Фон, поверхность, акцент, текст и дополнительный цвет будут проверены как роли интерфейса.</p>
+  <button class="site-btn-primary" id="siteCtaButton">Создать аудит</button>
 </div>
 
 <footer class="site-footer" id="siteFooter">
   <div id="siteFooterLogo" style="font-family:'Syne',sans-serif;font-weight:800">Aelius</div>
-  <div id="siteFooterLinks">Продукт · Блог · Контакты · Политика</div>
+  <div id="siteFooterLinks">Studio · Docs · Security · Contact</div>
 </footer>
-
-
-

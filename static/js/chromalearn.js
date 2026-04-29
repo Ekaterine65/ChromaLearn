@@ -134,17 +134,34 @@ function updatePreviewSite() {
   const surf = previewPalette[1] || '#ddeaf2';
   const acc  = previewPalette[2] || '#3d7db8';
   const txtc = previewPalette[3] || '#1b2d3e';
-  const extra = previewPalette[4] || null;
+  const extra = previewPalette[4] || blendHex(acc, bg, 0.35);
 
   const lBg   = getLuminance(bg);
   const lAcc  = getLuminance(acc);
+  const lExtra = getLuminance(extra);
   const onAcc = lAcc > 0.35 ? '#1b2d3e' : '#ffffff';
+  const onExtra = lExtra > 0.35 ? '#1b2d3e' : '#ffffff';
   const onBg  = txtc || (lBg > 0.45 ? '#1b2d3e' : '#f0f4f7');
-  const mutedTxt = extra || blendHex(onBg, bg, 0.5);
+  const mutedTxt = extra;
+  const borderColor = extra;
+
+  setPreviewSiteVars({
+    '--site-bg': bg,
+    '--site-surface': surf,
+    '--site-accent': acc,
+    '--site-extra': extra,
+    '--site-text': onBg,
+    '--site-muted': mutedTxt,
+    '--site-border': borderColor,
+    '--site-on-accent': onAcc,
+    '--site-on-extra': onExtra
+  });
 
   setStyleById('siteNav',     'background', bg + 'ee'); setStyleById('siteNav',    'color', onBg);
   setStyleById('siteNavCta',  'background', acc);       setStyleById('siteNavCta', 'color', onAcc);
-  setStyleById('siteHero',    'background', surf);      setStyleById('siteHero',   'color', onBg);
+  const heroEl = document.getElementById('siteHero');
+  const heroBackground = heroEl && heroEl.classList.contains('site-saas-hero') ? bg : surf;
+  setStyleById('siteHero',    'background', heroBackground);      setStyleById('siteHero',   'color', onBg);
   setStyleById('siteHeroTag', 'background', acc + '28'); setStyleById('siteHeroTag','color', acc);
   setStyleById('siteHeroBtnPrimary','background', acc);  setStyleById('siteHeroBtnPrimary','color', onAcc);
   setStyleById('siteHeroBtnSecondary','color', acc);       setStyleById('siteHeroBtnSecondary','borderColor', acc + '88');
@@ -169,6 +186,7 @@ function updatePreviewSite() {
   setStyleById('siteFooter','borderColor', acc + '33');
   setStyleById('siteFooter','color', mutedTxt);
   setStyleById('siteFooterLogo','color', acc);
+  setStyleById('siteNavLogo','color', acc);
 
   setStyleById('siteNavLinks','color', onBg);
   setStyleById('siteHeroTitle','color', onBg);
@@ -179,9 +197,16 @@ function updatePreviewSite() {
   setStyleById('siteTestimonialText1','color', mutedTxt);
   setStyleById('siteTestimonialText2','color', mutedTxt);
   setStyleById('siteCtaText','color', onAcc);
-  setStyleById('siteFooterLinks','color', mutedTxt);
+  setStyleById('siteFooterLinks','color', onBg);
 
   updateWcagPanel();
+}
+
+function setPreviewSiteVars(vars) {
+  const root = document.getElementById('panelCenter');
+  if (!root) return;
+  Object.entries(vars).forEach(([name, value]) => root.style.setProperty(name, value));
+  root.style.background = vars['--site-bg'];
 }
 
 function setStyleById(id, prop, val) {
@@ -642,6 +667,7 @@ function updateResultModal(modalId, result) {
   updateCriterionRow(modal, 'emotion', result.emotion_score);
   updateCriterionRow(modal, 'contrast', result.contrast_score);
   updateCriterionRow(modal, 'colorVision', result.color_vision_score);
+  updateResultFeedback(modal, result.feedback || []);
 }
 
 function updateCriterionRow(modal, key, scoreValue, labelValue) {
@@ -664,6 +690,24 @@ function getScoreColor(scoreValue) {
   if (scoreValue >= 70) return 'var(--accent)';
   if (scoreValue >= 50) return 'var(--accent2)';
   return 'var(--danger)';
+}
+
+function updateResultFeedback(modal, feedbackItems) {
+  const feedback = modal.querySelector('[data-result-feedback]');
+  const feedbackList = modal.querySelector('[data-result-feedback-list]');
+  if (!feedback || !feedbackList) return;
+
+  const items = Array.isArray(feedbackItems) ? feedbackItems.filter(Boolean) : [];
+  feedback.hidden = items.length === 0;
+  feedback.open = false;
+  if (!items.length) {
+    feedbackList.innerHTML = '';
+    return;
+  }
+
+  feedbackList.innerHTML = items
+    .map(item => `<li>${escapeHtml(item)}</li>`)
+    .join('');
 }
 
 function updateWcagPanel() {
@@ -725,6 +769,15 @@ function showModal(id) {
 function hideModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove('active');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 

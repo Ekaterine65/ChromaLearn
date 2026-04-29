@@ -324,6 +324,11 @@
       {% endif %}
     </div>
 
+    <details class="modal-feedback" data-result-feedback hidden>
+      <summary>Что стоит поправить</summary>
+      <ul class="modal-feedback-list" data-result-feedback-list></ul>
+    </details>
+
     <div class="modal-actions">
       <button class="btn-full btn-full-primary" onclick="hideModal('result-modal-{{ level_id }}')">Доработать палитру</button>
       <button class="btn-full btn-full-outline" onclick="location.href='{{ url_for('levels') }}'">Завершить уровень →</button>
