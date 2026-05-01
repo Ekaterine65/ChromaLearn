@@ -1,0 +1,306 @@
+{
+    "uid":  "chromalearn-skills",
+    "title":  "ChromaLearn · Навыки",
+    "timezone":  "browser",
+    "schemaVersion":  39,
+    "version":  4,
+    "refresh":  "30s",
+    "tags":  [
+                 "chromalearn",
+                 "навыки"
+             ],
+    "time":  {
+                 "from":  "now-30d",
+                 "to":  "now"
+             },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "Цветовая гармония",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_harmony), 1) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Эмоциональное соответствие",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_emotion), 1) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Контрастность WCAG",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_contrast), 1) AS value FROM results WHERE score_contrast IS NOT NULL AND $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Различимость при дальтонизме",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_colorblind), 1) AS value FROM results WHERE score_colorblind IS NOT NULL AND $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  6,
+                       "type":  "barchart",
+                       "title":  "Критерии по уровням",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  4
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT CONCAT(\u0027Уровень \u0027, t.level_number) AS \u0027Уровень\u0027, ROUND(AVG(r.score_harmony), 1) AS \u0027Цветовая гармония\u0027, ROUND(AVG(r.score_emotion), 1) AS \u0027Эмоциональное соответствие\u0027, ROUND(AVG(r.score_contrast), 1) AS \u0027Контрастность WCAG\u0027, ROUND(AVG(r.score_colorblind), 1) AS \u0027Различимость при дальтонизме\u0027 FROM tasks t JOIN results r ON r.task_id = t.id WHERE $__timeFilter(r.completed_at) GROUP BY t.level_number ORDER BY t.level_number"
+                                       }
+                                   ]
+                   }
+               ],
+    "links":  [
+                  {
+                      "type":  "link",
+                      "title":  "Вернуться в приложение",
+                      "url":  "http://localhost:5000/profile",
+                      "icon":  "external link",
+                      "targetBlank":  false,
+                      "tooltip":  "Открыть профиль ChromaLearn"
+                  }
+              ]
+}

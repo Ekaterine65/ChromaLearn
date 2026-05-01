@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+: "${MYSQL_DATABASE:?MYSQL_DATABASE is required}"
+: "${GRAFANA_MYSQL_USER:?GRAFANA_MYSQL_USER is required}"
+: "${GRAFANA_MYSQL_PASSWORD:?GRAFANA_MYSQL_PASSWORD is required}"
+
+mysql_note "Creating Grafana read-only MySQL user"
+docker_process_sql --database=mysql <<-EOSQL
+    CREATE USER IF NOT EXISTS '${GRAFANA_MYSQL_USER}'@'%' IDENTIFIED BY '${GRAFANA_MYSQL_PASSWORD}';
+    ALTER USER '${GRAFANA_MYSQL_USER}'@'%' IDENTIFIED BY '${GRAFANA_MYSQL_PASSWORD}';
+    GRANT SELECT ON \`${MYSQL_DATABASE}\`.* TO '${GRAFANA_MYSQL_USER}'@'%';
+    FLUSH PRIVILEGES;
+EOSQL

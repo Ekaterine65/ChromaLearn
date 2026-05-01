@@ -1,0 +1,16 @@
+{% extends "base_admin.html" %}
+
+{% block title %}ChromaLearn · Grafana{% endblock %}
+{% block page_title %}Grafana{% endblock %}
+{% block page_meta %}Редактор аналитических dashboard · доступ только для администратора{% endblock %}
+
+{% block content %}
+<div class="grafana-frame-wrap">
+  <iframe
+    class="grafana-frame"
+    src="{{ grafana_dashboard_path }}"
+    title="ChromaLearn Grafana dashboard"
+    loading="eager">
+  </iframe>
+</div>
+{% endblock %}

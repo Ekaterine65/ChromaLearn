@@ -1,0 +1,376 @@
+{
+    "uid":  "chromalearn-tasks",
+    "title":  "ChromaLearn · Задания",
+    "timezone":  "browser",
+    "schemaVersion":  39,
+    "version":  4,
+    "refresh":  "30s",
+    "tags":  [
+                 "chromalearn",
+                 "задания"
+             ],
+    "time":  {
+                 "from":  "now-30d",
+                 "to":  "now"
+             },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "Всего попыток",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(*) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Успешных попыток",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(*) AS value FROM results WHERE score_total \u003e= 60 AND $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Средний балл",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_total), 1) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Заданий с результатами",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(DISTINCT task_id) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  5,
+                       "type":  "barchart",
+                       "title":  "Успешность по уровням",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  4
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ELT(WEEKDAY(r.completed_at) + 1, \u0027Пн\u0027, \u0027Вт\u0027, \u0027Ср\u0027, \u0027Чт\u0027, \u0027Пт\u0027, \u0027Сб\u0027, \u0027Вс\u0027) AS \u0027День\u0027, ROUND(100 * AVG(CASE WHEN t.level_number = 1 THEN r.score_total \u003e= 60 END), 1) AS \u0027Уровень 1\u0027, ROUND(100 * AVG(CASE WHEN t.level_number = 2 THEN r.score_total \u003e= 60 END), 1) AS \u0027Уровень 2\u0027, ROUND(100 * AVG(CASE WHEN t.level_number = 3 THEN r.score_total \u003e= 60 END), 1) AS \u0027Уровень 3\u0027 FROM results r JOIN tasks t ON t.id = r.task_id WHERE $__timeFilter(r.completed_at) GROUP BY WEEKDAY(r.completed_at), ELT(WEEKDAY(r.completed_at) + 1, \u0027Пн\u0027, \u0027Вт\u0027, \u0027Ср\u0027, \u0027Чт\u0027, \u0027Пт\u0027, \u0027Сб\u0027, \u0027Вс\u0027) ORDER BY WEEKDAY(r.completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  6,
+                       "type":  "barchart",
+                       "title":  "Распределение результатов",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  12
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT CASE WHEN score_total \u003c 40 THEN \u0027\u003c40\u0027 WHEN score_total \u003c 55 THEN \u002740-55\u0027 WHEN score_total \u003c 70 THEN \u002755-70\u0027 WHEN score_total \u003c 80 THEN \u002770-80\u0027 WHEN score_total \u003c 90 THEN \u002780-90\u0027 ELSE \u002790+\u0027 END AS \u0027Диапазон\u0027, COUNT(*) AS \u0027Результатов\u0027 FROM results WHERE $__timeFilter(completed_at) GROUP BY 1 ORDER BY MIN(score_total)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  8,
+                       "type":  "table",
+                       "title":  "10 заданий с самой сильной просадкой по навыкам",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  20
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT t.id AS \u0027ID\u0027, t.title AS \u0027Задание\u0027, t.level_number AS \u0027Уровень\u0027, ROUND(AVG(r.score_total), 1) AS \u0027Итог\u0027, ROUND(AVG(r.score_harmony), 1) AS \u0027Гармония\u0027, ROUND(AVG(r.score_emotion), 1) AS \u0027Эмоция\u0027, ROUND(AVG(r.score_contrast), 1) AS \u0027Контраст\u0027, ROUND(AVG(r.score_colorblind), 1) AS \u0027Зрение\u0027, COUNT(r.id) AS \u0027Попыток\u0027 FROM tasks t JOIN results r ON r.task_id = t.id WHERE $__timeFilter(r.completed_at) GROUP BY t.id, t.title, t.level_number ORDER BY LEAST(COALESCE(AVG(r.score_harmony), 100), COALESCE(AVG(r.score_emotion), 100), COALESCE(AVG(r.score_contrast), 100), COALESCE(AVG(r.score_colorblind), 100)) ASC, AVG(r.score_total) ASC LIMIT 10"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  9,
+                       "type":  "table",
+                       "title":  "Все попытки выбранного задания",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  10,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  28
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT r.id AS \u0027ID результата\u0027, DATE_FORMAT(r.completed_at, \u0027%Y-%m-%d %H:%i\u0027) AS \u0027Время\u0027, COALESCE(u.login, \u0027Гость\u0027) AS \u0027Пользователь\u0027, r.score_total AS \u0027Итог\u0027, r.score_harmony AS \u0027Гармония\u0027, r.score_emotion AS \u0027Эмоция\u0027, r.score_contrast AS \u0027Контраст\u0027, r.score_colorblind AS \u0027Зрение\u0027, COALESCE(CAST(r.harmony_used AS CHAR), \u0027Не выбрано\u0027) AS \u0027Гармония выбрана\u0027, JSON_UNQUOTE(JSON_EXTRACT(r.palette_json, \u0027$[0]\u0027)) AS \u0027Цвет 1\u0027, JSON_UNQUOTE(JSON_EXTRACT(r.palette_json, \u0027$[1]\u0027)) AS \u0027Цвет 2\u0027, JSON_UNQUOTE(JSON_EXTRACT(r.palette_json, \u0027$[2]\u0027)) AS \u0027Цвет 3\u0027, JSON_UNQUOTE(JSON_EXTRACT(r.palette_json, \u0027$[3]\u0027)) AS \u0027Цвет 4\u0027, JSON_UNQUOTE(JSON_EXTRACT(r.palette_json, \u0027$[4]\u0027)) AS \u0027Цвет 5\u0027, r.palette_json AS \u0027Палитра JSON\u0027 FROM results r LEFT JOIN users u ON u.id = r.user_id WHERE r.task_id = ${task_id:raw} ORDER BY r.completed_at DESC, r.id DESC"
+                                       }
+                                   ],
+                       "description":  "Все результаты по выбранному заданию: пользователь, баллы, тип гармонии и сохраненная палитра. Палитра появится только у новых попыток после обновления приложения."
+                   }
+               ],
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "type":  "query",
+                                        "name":  "task_id",
+                                        "label":  "Задание из 10 худших",
+                                        "datasource":  {
+                                                           "type":  "mysql",
+                                                           "uid":  "chromalearn-mysql"
+                                                       },
+                                        "query":  "SELECT t.id AS __value, CONCAT(\u0027#\u0027, t.id, \u0027 · \u0027, t.title, \u0027 · уровень \u0027, t.level_number, \u0027 · итог \u0027, ROUND(AVG(r.score_total), 1)) AS __text FROM tasks t JOIN results r ON r.task_id = t.id WHERE $__timeFilter(r.completed_at) GROUP BY t.id, t.title, t.level_number ORDER BY LEAST(COALESCE(AVG(r.score_harmony), 100), COALESCE(AVG(r.score_emotion), 100), COALESCE(AVG(r.score_contrast), 100), COALESCE(AVG(r.score_colorblind), 100)) ASC, AVG(r.score_total) ASC LIMIT 10",
+                                        "refresh":  1,
+                                        "sort":  0,
+                                        "multi":  false,
+                                        "includeAll":  false,
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "#3 · Серовато-бежевый · уровень 1 · итог 22.5",
+                                                        "value":  "3"
+                                                    },
+                                        "options":  [
+
+                                                    ]
+                                    }
+                                ]
+                   },
+    "links":  [
+                  {
+                      "type":  "link",
+                      "title":  "Вернуться в приложение",
+                      "url":  "http://localhost:5000/profile",
+                      "icon":  "external link",
+                      "targetBlank":  false,
+                      "tooltip":  "Открыть профиль ChromaLearn"
+                  }
+              ]
+}

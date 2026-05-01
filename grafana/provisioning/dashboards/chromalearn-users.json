@@ -1,0 +1,291 @@
+{
+    "uid":  "chromalearn-users",
+    "title":  "ChromaLearn · Пользователи",
+    "timezone":  "browser",
+    "schemaVersion":  39,
+    "version":  4,
+    "refresh":  "30s",
+    "tags":  [
+                 "chromalearn",
+                 "пользователи"
+             ],
+    "time":  {
+                 "from":  "now-90d",
+                 "to":  "now"
+             },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "Всего пользователей",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(*) AS value FROM users WHERE role = \u0027user\u0027"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Новые за период",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(*) AS value FROM users WHERE role = \u0027user\u0027 AND $__timeFilter(created_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Активные за период",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COUNT(DISTINCT user_id) AS value FROM results WHERE user_id IS NOT NULL AND $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Средний балл пользователей",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  50
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  75
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "auto",
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ROUND(AVG(score_total), 1) AS value FROM results WHERE $__timeFilter(completed_at)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  5,
+                       "type":  "timeseries",
+                       "title":  "Регистрации по дням",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  4
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT $__timeGroupAlias(created_at, \u00271d\u0027), COUNT(*) AS \u0027Регистрации\u0027 FROM users WHERE role = \u0027user\u0027 AND $__timeFilter(created_at) GROUP BY 1 ORDER BY 1"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  6,
+                       "type":  "barchart",
+                       "title":  "Распределение результатов",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  4
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT bucket AS \u0027Диапазон\u0027, COUNT(*) AS \u0027Пользователей\u0027 FROM (SELECT user_id, CASE WHEN AVG(score_total) \u003c 40 THEN \u0027\u003c40\u0027 WHEN AVG(score_total) \u003c 55 THEN \u002740-55\u0027 WHEN AVG(score_total) \u003c 70 THEN \u002755-70\u0027 WHEN AVG(score_total) \u003c 80 THEN \u002770-80\u0027 WHEN AVG(score_total) \u003c 90 THEN \u002780-90\u0027 ELSE \u002790+\u0027 END AS bucket, AVG(score_total) AS avg_score FROM results WHERE user_id IS NOT NULL AND $__timeFilter(completed_at) GROUP BY user_id) x GROUP BY bucket ORDER BY MIN(avg_score)"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  7,
+                       "type":  "table",
+                       "title":  "Самые активные пользователи",
+                       "datasource":  {
+                                          "type":  "mysql",
+                                          "uid":  "chromalearn-mysql"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  12
+                                   },
+                       "targets":  [
+                                       {
+                                           "refId":  "A",
+                                           "format":  "table",
+                                           "rawSql":  "SELECT u.login AS \u0027Логин\u0027, u.email AS \u0027Email\u0027, COUNT(r.id) AS \u0027Завершений\u0027, ROUND(AVG(r.score_total), 1) AS \u0027Средний балл\u0027, MAX(r.completed_at) AS \u0027Последнее завершение\u0027 FROM users u LEFT JOIN results r ON r.user_id = u.id AND $__timeFilter(r.completed_at) WHERE u.role = \u0027user\u0027 GROUP BY u.id, u.login, u.email ORDER BY COUNT(r.id) DESC, AVG(r.score_total) DESC LIMIT 20"
+                                       }
+                                   ]
+                   }
+               ],
+    "links":  [
+                  {
+                      "type":  "link",
+                      "title":  "Вернуться в приложение",
+                      "url":  "http://localhost:5000/profile",
+                      "icon":  "external link",
+                      "targetBlank":  false,
+                      "tooltip":  "Открыть профиль ChromaLearn"
+                  }
+              ]
+}
