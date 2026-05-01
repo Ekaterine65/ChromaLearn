@@ -532,7 +532,10 @@ function renderTaskPage(page) {
         <div class="score-ring ${t.sc}">${t.score}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">балл</div>
       </div>
-      <a href="${t.retry_url || '/levels'}" class="retry-btn text-decoration-none">Повторить</a>
+      <a href="${t.retry_url || '/levels'}" class="retry-btn text-decoration-none" aria-label="Повторить задание" title="Повторить">
+        <span class="retry-btn-icon" aria-hidden="true">↻</span>
+        <span class="retry-btn-text">Повторить</span>
+      </a>
     </div>
   `).join('');
 

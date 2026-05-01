@@ -120,6 +120,19 @@ def test_profile_renders_activity_calendar(client):
     assert b"year-option" in response.data
 
 
+def test_game_renders_orientation_guard(client):
+    task = Task(level_number=1, title="Calm", description="Build a calm palette")
+    db.session.add(task)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["active_task_level_1"] = task.id
+
+    response = client.get("/game/1")
+
+    assert response.status_code == 200
+    assert b"game-orientation-guard" in response.data
+
+
 def test_repeat_task_loads_completed_task_into_game_session(client):
     user = create_user(login="regular")
     task = Task(level_number=2, title="Calm", description="Build a calm palette")

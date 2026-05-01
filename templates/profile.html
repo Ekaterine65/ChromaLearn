@@ -10,10 +10,21 @@
     <a href="{{ url_for('landing') }}" class="logo text-decoration-none">Chroma<span>Learn</span></a>
     <div class="d-flex align-items-center gap-3">
       {% if current_user.is_authenticated and current_user.is_admin %}
-      <a href="{{ url_for('admin.overview') }}" class="btn-sm-primary text-decoration-none">Админ-панель</a>
+      <a href="{{ url_for('admin.overview') }}" class="btn-sm-primary text-decoration-none profile-header-action" title="Админ-панель" aria-label="Админ-панель">
+        <span class="action-full">Админ-панель</span>
+        <span class="action-icon" aria-hidden="true">⚙</span>
+      </a>
       {% endif %}
-      <a href="{{ url_for('auth.logout') }}" class="btn-sm text-decoration-none">Выйти</a>
-      <a href="javascript:history.back()" class="back-btn text-decoration-none">← Назад</a>
+      <a href="{{ url_for('auth.logout') }}" class="btn-sm text-decoration-none profile-header-action" title="Выйти" aria-label="Выйти">
+        <span class="action-full">Выйти</span>
+        <span class="action-icon" aria-hidden="true">
+          <img class="action-img" src="https://img.icons8.com/?size=100&id=Q1xkcFuVON39&format=png&color=000000" alt="">
+        </span>
+      </a>
+      <a href="javascript:history.back()" class="back-btn text-decoration-none profile-header-action" title="Назад" aria-label="Назад">
+        <span class="action-full">← Назад</span>
+        <span class="action-icon" aria-hidden="true">←</span>
+      </a>
     </div>
   </header>
 
