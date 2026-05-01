@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from math import sqrt
 from typing import Iterable
 
@@ -97,7 +98,7 @@ def process_task_submission(task: Task, palette: list, current_user) -> dict:
     if not harmony_used and detected_harmony:
         harmony_used = HarmonyType(detected_harmony)
 
-    saved = store_task_result(task, scores, harmony_used, current_user)
+    saved = store_task_result(task, scores, harmony_used, current_user, palette)
     meta = build_result_meta(scores["total_score"])
     contrast = scores["contrast"]
     color_vision = scores["color_vision"]
@@ -120,7 +121,14 @@ def process_task_submission(task: Task, palette: list, current_user) -> dict:
     }
 
 
-def store_task_result(task: Task, scores: dict, harmony_used: HarmonyType | None, current_user) -> bool:
+def store_task_result(
+    task: Task,
+    scores: dict,
+    harmony_used: HarmonyType | None,
+    current_user,
+    palette: list,
+) -> bool:
+    colors = normalize_palette(palette)
     result = Result(
         user_id=current_user.id if current_user.is_authenticated else None,
         task_id=task.id,
@@ -130,6 +138,7 @@ def store_task_result(task: Task, scores: dict, harmony_used: HarmonyType | None
         score_colorblind=scores["color_vision"]["score"] if scores["color_vision"] else None,
         score_total=scores["total_score"],
         harmony_used=harmony_used,
+        palette_json=json.dumps(colors, ensure_ascii=False),
     )
     db.session.add(result)
     db.session.commit()

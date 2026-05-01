@@ -1278,6 +1278,22 @@ body {
 }
 .content{padding:28px 32px 60px;display:flex;flex-direction:column;gap:16px}
 
+.grafana-frame-wrap{
+  min-height:calc(100vh - 150px);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--surface);
+}
+.grafana-frame{
+  display:block;
+  width:100%;
+  height:calc(100vh - 150px);
+  min-height:720px;
+  border:0;
+  background:var(--surface);
+}
+
 .admin-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 
 .card{

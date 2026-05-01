@@ -89,6 +89,7 @@ class Task(Base):
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[Optional[str]] = mapped_column(String(1000))
     harmony_type: Mapped[Optional[HarmonyType]] = mapped_column(sa.Enum(HarmonyType))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     emotion: Mapped[Optional["Emotion"]] = relationship(back_populates="tasks")
     results: Mapped[List["Result"]] = relationship(back_populates="task")
@@ -143,6 +144,7 @@ class Result(Base):
     score_colorblind: Mapped[Optional[int]] = mapped_column(Integer)
     score_total: Mapped[int] = mapped_column(Integer)
     harmony_used: Mapped[Optional[HarmonyType]] = mapped_column(sa.Enum(HarmonyType))
+    palette_json: Mapped[Optional[str]] = mapped_column(Text)
     completed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     user: Mapped[Optional["User"]] = relationship(back_populates="results")

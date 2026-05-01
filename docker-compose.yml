@@ -1,34 +1,75 @@
-version: '3.9'
-
 services:
   db:
     image: mysql:8.0
     container_name: chroma_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 123
-      MYSQL_DATABASE: chromalearn
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-chromalearn}
+      GRAFANA_MYSQL_USER: ${GRAFANA_MYSQL_USER:-grafana_reader}
+      GRAFANA_MYSQL_PASSWORD: ${GRAFANA_MYSQL_PASSWORD:?Set GRAFANA_MYSQL_PASSWORD in .env}
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
 
   web:
     build: .
     container_name: chroma_app
     depends_on:
       - db
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
-      DATABASE_URL: mysql+mysqlconnector://root:123@db:3306/chromalearn
-      SECRET_KEY: supersecret
-      MYSQL_HOST: db
-      MYSQL_PORT: 3306
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 123
-      MYSQL_DATABASE: chromalearn
-      DATA_DUMP_PATH: /app/Chromalearn_Data_Dump.sql
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      MYSQL_HOST: ${MYSQL_HOST:-db}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-chromalearn}
+      DATA_DUMP_PATH: ${DATA_DUMP_PATH:-/app/Chromalearn_Data_Dump.sql}
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: chroma_grafana
+    restart: always
+    depends_on:
+      - db
+    environment:
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_AUTO_ASSIGN_ORG: "true"
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Editor
+      GF_SERVER_ROOT_URL: http://localhost:5000/admin/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GRAFANA_MYSQL_USER: ${GRAFANA_MYSQL_USER:-grafana_reader}
+      GRAFANA_MYSQL_PASSWORD: ${GRAFANA_MYSQL_PASSWORD:?Set GRAFANA_MYSQL_PASSWORD in .env}
+    expose:
+      - "3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: chroma_proxy
+    restart: always
+    depends_on:
+      - web
+      - grafana
+    ports:
+      - "5000:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   db_data:
+  grafana_data:

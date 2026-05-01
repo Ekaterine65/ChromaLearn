@@ -104,6 +104,8 @@ def register():
 
         flash('Аккаунт создан успешно!', 'success')
         login_user(user)
+        if user.is_admin:
+            return redirect(url_for('admin.overview'))
         return redirect(back_url)
 
     return render_template('auth/register.html', form=form, back_url=back_url)

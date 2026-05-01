@@ -9,6 +9,9 @@
   <header class="profile-header d-flex align-items-center justify-content-between">
     <a href="{{ url_for('landing') }}" class="logo text-decoration-none">Chroma<span>Learn</span></a>
     <div class="d-flex align-items-center gap-3">
+      {% if current_user.is_authenticated and current_user.is_admin %}
+      <a href="{{ url_for('admin.overview') }}" class="btn-sm-primary text-decoration-none">Админ-панель</a>
+      {% endif %}
       <a href="{{ url_for('auth.logout') }}" class="btn-sm text-decoration-none">Выйти</a>
       <a href="javascript:history.back()" class="back-btn text-decoration-none">← Назад</a>
     </div>

@@ -1,6 +1,11 @@
 .env
+.env.*
+!.env.example
 __pycache__/
 .git/
 config.py
 seed_translation_cache.json
 seed_colors_report.txt
+.pytest_cache/
+pytest-cache-files-*/
+*.pyc

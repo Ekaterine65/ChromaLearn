@@ -30,6 +30,10 @@
        class="nav-item text-decoration-none {{ 'active' if active_page == 'overview' }}">
       <span class="nav-icon">📊</span> Обзор
     </a>
+    <a href="{{ url_for('admin.analytics') }}"
+       class="nav-item text-decoration-none {{ 'active' if active_page == 'analytics' }}">
+      <span class="nav-icon">G</span> Grafana
+    </a>
     <a href="{{ url_for('admin.users') }}"
        class="nav-item text-decoration-none {{ 'active' if active_page == 'users' }}">
       <span class="nav-icon">👥</span> Пользователи

@@ -1,8 +1,29 @@
-from flask import Blueprint, render_template, redirect, url_for, abort, request
+import os
+
+from flask import Blueprint, render_template, redirect, url_for, abort, request, Response
 from flask_login import login_required, current_user
 from functools import wraps
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+GRAFANA_DASHBOARD_PATHS = {
+    "overview": os.getenv(
+        "GRAFANA_OVERVIEW_PATH",
+        "/admin/grafana/d/chromalearn-overview/chromalearn-overview?orgId=1",
+    ),
+    "users": os.getenv(
+        "GRAFANA_USERS_PATH",
+        "/admin/grafana/d/chromalearn-users/chromalearn-users?orgId=1",
+    ),
+    "tasks": os.getenv(
+        "GRAFANA_TASKS_PATH",
+        "/admin/grafana/d/chromalearn-tasks/chromalearn-tasks?orgId=1",
+    ),
+    "skills": os.getenv(
+        "GRAFANA_SKILLS_PATH",
+        "/admin/grafana/d/chromalearn-skills/chromalearn-skills?orgId=1",
+    ),
+}
 
 def admin_required(f):
     @wraps(f)
@@ -212,46 +233,42 @@ def _alerts_data():
 
 # ── Роуты ────────────────────────────────────────────────────────────────────
 
+@bp.route("")
 @bp.route("/")
 @bp.route("/overview")
 @admin_required
 def overview():
-    return render_template(
-        "admin/admin_overview.html",
-        active_page="overview",
-        overview=_overview_data(),
-        **_admin_context(),
-    )
+    return redirect(GRAFANA_DASHBOARD_PATHS["overview"])
 
 
 @bp.route("/users")
 @admin_required
 def users():
-    return render_template(
-        "admin/admin_users.html",
-        active_page="users",
-        users=_users_data(),
-        **_admin_context(),
-    )
+    return redirect(GRAFANA_DASHBOARD_PATHS["users"])
 
 
 @bp.route("/tasks")
 @admin_required
 def tasks():
-    return render_template(
-        "admin/admin_tasks.html",
-        active_page="tasks",
-        tasks_stats=_tasks_data(),
-        **_admin_context(),
-    )
+    return redirect(GRAFANA_DASHBOARD_PATHS["tasks"])
 
 
 @bp.route("/skills")
 @admin_required
 def skills():
-    return render_template(
-        "admin/admin_skills.html",
-        active_page="skills",
-        skills=_skills_data(),
-        **_admin_context(),
-    )
+    return redirect(GRAFANA_DASHBOARD_PATHS["skills"])
+
+
+@bp.route("/analytics")
+@admin_required
+def analytics():
+    return redirect(GRAFANA_DASHBOARD_PATHS["overview"])
+
+
+@bp.route("/grafana-auth")
+def grafana_auth():
+    if not current_user.is_authenticated:
+        return Response(status=401)
+    if not current_user.is_admin:
+        return Response(status=403)
+    return Response(status=204, headers={"X-WEBAUTH-USER": current_user.login})
