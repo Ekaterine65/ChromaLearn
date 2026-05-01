@@ -179,15 +179,40 @@ h1,h2,h3 { font-family:'Syne',sans-serif; }
 .section-title { font-family:'Syne',sans-serif;font-size:20px;font-weight:700; }
 
 /* Activity calendar */
+.activity-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 110px;
+  gap:18px;
+  align-items:start;
+}
 .calendar-wrap {
   background:var(--surface); border:1px solid var(--border);
-  border-radius:20px; padding:28px 32px;
+  border-radius:8px; padding:20px 24px;
+  min-width:0;
+}
+.calendar-total {
+  color:var(--text);
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:18px;
+}
+.calendar-scroll {
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  overflow-x:auto;
+  padding-bottom:4px;
+}
+.calendar-scroll::-webkit-scrollbar { height:3px; }
+.calendar-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
+.cal-grid-area {
+  min-width:739px;
 }
 .cal-months {
-  position:relative; height:18px; margin-bottom:6px; margin-left:28px;
+  position:relative; height:18px; margin-bottom:3px;
 }
 .cal-month-label {
-  font-size:11px;color:var(--muted);letter-spacing:.04em;
+  font-size:12px;color:var(--text);letter-spacing:0;
   position:absolute; top:0; white-space:nowrap;
 }
 .cal-grid-wrap { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; }
@@ -195,13 +220,15 @@ h1,h2,h3 { font-family:'Syne',sans-serif; }
 .cal-grid-wrap::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
 .cal-days-col {
   display:flex;flex-direction:column;gap:3px;
-  padding-top:2px;
+  padding-top:21px;
+  flex:0 0 30px;
 }
-.cal-day-label { font-size:10px;color:var(--muted);height:11px;line-height:11px;width:22px;text-align:right; }
+.cal-day-label { font-size:12px;color:var(--text);height:11px;line-height:11px;width:30px;text-align:right; }
 .cal-grid {
   display:flex; flex-direction:column; gap:3px; flex:1;
 }
 .cal-weeks { display:flex; gap:3px; }
+.cal-week { display:flex; flex-direction:column; gap:3px; }
 .cal-cell {
   width:11px;height:11px;border-radius:2.5px;
   background:rgba(255,255,255,.05);
@@ -213,11 +240,56 @@ h1,h2,h3 { font-family:'Syne',sans-serif; }
 .cal-cell.l2 { background:rgba(139,95,255,.45); }
 .cal-cell.l3 { background:rgba(139,95,255,.65); }
 .cal-cell.l4 { background:rgba(139,95,255,.9); box-shadow:0 0 4px rgba(139,95,255,.5); }
+.calendar-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-top:10px;
+}
+.calendar-help {
+  color:var(--muted);
+  font-size:12px;
+}
+.calendar-help:hover { color:var(--text); }
 .cal-legend {
   display:flex;align-items:center;gap:6px;justify-content:flex-end;
-  margin-top:10px;font-size:11px;color:var(--muted);
+  margin-top:0;font-size:12px;color:var(--muted);
 }
-.cal-legend-cell { width:11px;height:11px;border-radius:2.5px; }
+.cal-legend-cell { width:11px;height:11px;border-radius:2.5px;background:rgba(255,255,255,.05); }
+.cal-legend-cell.l1 { background:rgba(139,95,255,.25); }
+.cal-legend-cell.l2 { background:rgba(139,95,255,.45); }
+.cal-legend-cell.l3 { background:rgba(139,95,255,.65); }
+.cal-legend-cell.l4 { background:rgba(139,95,255,.9); box-shadow:0 0 4px rgba(139,95,255,.5); }
+.year-list {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.year-option {
+  width:100%;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:9px;
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  font:inherit;
+  font-size:13px;
+  font-weight:500;
+  padding:9px 16px;
+  text-align:left;
+  cursor:pointer;
+  transition:all .2s;
+}
+.year-option:hover {
+  color:var(--text);
+  background:rgba(255,255,255,.11);
+  border-color:rgba(255,255,255,.32);
+}
+.year-option.active {
+  background:rgba(255,255,255,.11);
+  border-color:rgba(255,255,255,.32);
+  color:var(--text);
+}
 
 /* Tasks table */
 .tasks-list { display:flex; flex-direction:column; gap:10px; }
@@ -1143,6 +1215,11 @@ body {
   .profile-hero-actions { grid-column: 1 / -1; justify-self:start; }
   .landing-title { font-size: clamp(36px,10vw,72px); }
   .profile-header { padding: 16px 20px; }
+  .activity-layout { grid-template-columns:1fr; }
+  .year-list { flex-direction:row; overflow-x:auto; }
+  .year-option { width:auto; min-width:82px; text-align:center; }
+  .calendar-wrap { padding:18px 16px; }
+  .calendar-footer { align-items:flex-start; flex-direction:column; }
 }
 
 /* Site */

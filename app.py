@@ -3,11 +3,11 @@ import random
 from urllib.parse import urlparse
 
 from flask_migrate import Migrate
-from flask import flash, jsonify, redirect, request, url_for
+from flask import abort, flash, jsonify, redirect, request, url_for
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import current_user
 from assessment import build_color_vision_preview_response, process_task_submission
-from models import db, Task, User
+from models import db, Result, Task, User
 from auth import bp as auth_bp, init_login_manager, login_required
 from admin import bp as admin_bp
 from tools import EditProfileForm, build_profile_data, generate_task, task_to_game_dict
@@ -120,6 +120,26 @@ def game(level_id: int):
 def profile():
     profile_data = build_profile_data(current_user)
     return render_template("profile.html", profile=profile_data)
+
+
+@app.route("/profile/repeat/<int:task_id>")
+@login_required
+def repeat_task(task_id: int):
+    task = db.session.execute(
+        db.select(Task)
+        .join(Result, Result.task_id == Task.id)
+        .where(Result.user_id == current_user.id, Task.id == task_id)
+        .limit(1)
+    ).scalars().first()
+
+    if not task:
+        abort(404)
+
+    session.permanent = True
+    session[f"active_task_level_{task.level_number}"] = task.id
+    session.pop(f"active_site_level_{task.level_number}", None)
+    session.modified = True
+    return redirect(url_for("game", level_id=task.level_number))
 
 @app.route("/profile/edit", methods=["GET", "POST"])
 @login_required

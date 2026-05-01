@@ -198,6 +198,7 @@ def build_profile_data(current_user) -> dict:
             },
             "completed_tasks": [],
             "activity": {},
+            "activity_totals": {},
             "activity_years": [date.today().year],
         }
 
@@ -279,8 +280,10 @@ def build_profile_data(current_user) -> dict:
             icon = keyword_to_emoji(emotion.name if emotion else None)
             harmony = last_result.harmony_used or task.harmony_type
             completed_tasks.append({
+                "id": task.id,
                 "icon": icon,
                 "name": task.title,
+                "retry_url": f"/profile/repeat/{task.id}",
                 "lv": task.level_number,
                 "lv_style": (
                     "background:rgba(200,180,255,.12);color:#c8b4ff"
@@ -295,10 +298,22 @@ def build_profile_data(current_user) -> dict:
                 "sc": score_class(last_result.score_total),
             })
 
-    activity_data = {}
+    activity_tasks_by_day = {}
+    activity_tasks_by_year = {}
     for r in results:
         key = r.completed_at.date().isoformat()
-        activity_data[key] = activity_data.get(key, 0) + 1
+        year_key = str(r.completed_at.year)
+        activity_tasks_by_day.setdefault(key, set()).add(r.task_id)
+        activity_tasks_by_year.setdefault(year_key, set()).add(r.task_id)
+
+    activity_data = {
+        key: len(task_ids)
+        for key, task_ids in activity_tasks_by_day.items()
+    }
+    activity_totals = {
+        year: len(task_ids)
+        for year, task_ids in activity_tasks_by_year.items()
+    }
 
     streak_days = compute_streak(activity_data, now)
 
@@ -329,6 +344,7 @@ def build_profile_data(current_user) -> dict:
         },
         "completed_tasks": completed_tasks,
         "activity": activity_data,
+        "activity_totals": activity_totals,
         "activity_years": activity_years,
     }
 

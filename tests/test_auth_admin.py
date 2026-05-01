@@ -1,4 +1,7 @@
-from models import User, UserRole, db
+from datetime import datetime
+
+from models import Result, Task, User, UserRole, db
+from tools import build_profile_data
 
 
 def create_user(login="user", role=UserRole.user):
@@ -105,6 +108,116 @@ def test_profile_requires_login(client):
 
     assert response.status_code == 302
     assert "/auth/login" in response.headers["Location"]
+
+
+def test_profile_renders_activity_calendar(client):
+    user = create_user(login="regular")
+    login_as(client, user)
+
+    response = client.get("/profile")
+
+    assert response.status_code == 200
+    assert b"year-option" in response.data
+
+
+def test_repeat_task_loads_completed_task_into_game_session(client):
+    user = create_user(login="regular")
+    task = Task(level_number=2, title="Calm", description="Build a calm palette")
+    db.session.add(task)
+    db.session.flush()
+    db.session.add(
+        Result(
+            user_id=user.id,
+            task_id=task.id,
+            score_emotion=80,
+            score_harmony=90,
+            score_contrast=None,
+            score_colorblind=None,
+            score_total=85,
+            harmony_used=None,
+            palette_json=None,
+        )
+    )
+    db.session.add(
+        Result(
+            user_id=user.id,
+            task_id=task.id,
+            score_emotion=70,
+            score_harmony=75,
+            score_contrast=None,
+            score_colorblind=None,
+            score_total=72,
+            harmony_used=None,
+            palette_json=None,
+        )
+    )
+    db.session.commit()
+    login_as(client, user)
+
+    response = client.get(f"/profile/repeat/{task.id}")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/game/2"
+    with client.session_transaction() as session:
+        assert session["active_task_level_2"] == task.id
+
+
+def test_repeat_task_rejects_task_not_completed_by_user(client):
+    user = create_user(login="regular")
+    other = create_user(login="other")
+    task = Task(level_number=1, title="Calm", description="Build a calm palette")
+    db.session.add(task)
+    db.session.flush()
+    db.session.add(
+        Result(
+            user_id=other.id,
+            task_id=task.id,
+            score_emotion=80,
+            score_harmony=90,
+            score_contrast=None,
+            score_colorblind=None,
+            score_total=85,
+            harmony_used=None,
+            palette_json=None,
+        )
+    )
+    db.session.commit()
+    login_as(client, user)
+
+    response = client.get(f"/profile/repeat/{task.id}")
+
+    assert response.status_code == 404
+
+
+def test_profile_activity_counts_completed_tasks_not_attempts(client):
+    user = create_user(login="regular")
+    first_task = Task(level_number=1, title="Calm", description="Build a calm palette")
+    second_task = Task(level_number=2, title="Bold", description="Build a bold palette")
+    db.session.add_all([first_task, second_task])
+    db.session.flush()
+
+    for task, score in [(first_task, 85), (first_task, 90), (second_task, 80)]:
+        db.session.add(
+            Result(
+                user_id=user.id,
+                task_id=task.id,
+                score_emotion=score,
+                score_harmony=score,
+                score_contrast=None,
+                score_colorblind=None,
+                score_total=score,
+                harmony_used=None,
+                palette_json=None,
+                completed_at=datetime(2026, 4, 10, 12, 0),
+            )
+        )
+    db.session.commit()
+
+    profile = build_profile_data(user)
+
+    assert profile["activity"]["2026-04-10"] == 2
+    assert profile["activity_totals"]["2026"] == 2
+    assert profile["stats"]["tasks_done"] == 2
 
 
 def test_profile_edit_updates_basic_fields(client):

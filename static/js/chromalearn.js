@@ -532,7 +532,7 @@ function renderTaskPage(page) {
         <div class="score-ring ${t.sc}">${t.score}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">балл</div>
       </div>
-      <a href="/levels" class="retry-btn text-decoration-none">Повторить</a>
+      <a href="${t.retry_url || '/levels'}" class="retry-btn text-decoration-none">Повторить</a>
     </div>
   `).join('');
 
@@ -558,6 +558,7 @@ let calYear = (window.ACTIVITY_YEARS && window.ACTIVITY_YEARS.length)
 
 function renderActivityCalendar(year) {
   const allData  = window.ACTIVITY_DATA || {};
+  const yearTotals = window.ACTIVITY_TOTALS || {};
   const data = {};
   Object.keys(allData).forEach(key => {
     if (key.startsWith(String(year))) data[key] = allData[key];
@@ -575,26 +576,28 @@ function renderActivityCalendar(year) {
   while (days.length % 7 !== 0) days.push(null);
 
   const numWeeks = days.length / 7;
-  let weeksHTML = '', total = 0;
+  let weeksHTML = '', visibleTotal = 0;
   const colW = 14;
 
   for (let w = 0; w < numWeeks; w++) {
-    weeksHTML += '<div style="display:flex;flex-direction:column;gap:3px">';
+    weeksHTML += '<div class="cal-week">';
     for (let dow = 0; dow < 7; dow++) {
       const day = days[w * 7 + dow];
       if (!day) { weeksHTML += '<div style="width:11px;height:11px"></div>'; continue; }
       const key   = day.toISOString().slice(0, 10);
       const count = data[key] || 0;
       const level = Math.min(4, count);
-      total += count;
+      visibleTotal += count;
       weeksHTML += `<div class="cal-cell${level > 0 ? ' l'+level : ''}" title="${key}: ${count} задан."></div>`;
     }
     weeksHTML += '</div>';
   }
-  weeksEl.style.cssText = 'display:flex;gap:3px';
   weeksEl.innerHTML = weeksHTML;
 
-  if (totalEl) totalEl.textContent = `${total} заданий выполнено в ${year} году`;
+  if (totalEl) {
+    const total = yearTotals[String(year)] ?? visibleTotal;
+    totalEl.textContent = `${total} заданий выполнено в ${year} году`;
+  }
 
   if (monthsEl) {
     const MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
@@ -611,8 +614,9 @@ function renderActivityCalendar(year) {
 
 function setCalendarYear(year) {
   calYear = year;
-  const sel = document.getElementById('yearSelect');
-  if (sel) sel.value = String(year);
+  document.querySelectorAll('.year-option').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === String(year));
+  });
   renderActivityCalendar(year);
 }
 
