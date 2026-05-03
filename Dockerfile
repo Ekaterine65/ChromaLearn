@@ -7,9 +7,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN apt-get update && apt-get install -y \
-    netcat-openbsd \
-    default-mysql-client \
+RUN sed -i \
+    -e 's|http://deb.debian.org/debian-security|http://mirror.yandex.ru/debian-security|g' \
+    -e 's|http://deb.debian.org/debian|http://mirror.yandex.ru/debian|g' \
+    /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y netcat-openbsd default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN chmod +x entrypoint.sh

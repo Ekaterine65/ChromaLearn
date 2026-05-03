@@ -9,3 +9,5 @@ seed_colors_report.txt
 .pytest_cache/
 pytest-cache-files-*/
 *.pyc
+certbot/
+
